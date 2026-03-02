@@ -1,0 +1,44 @@
+{
+  "sprint_id": "S03",
+  "phase": "Phase-2",
+  "sprint_name": "Greenfield Planning - Architecture Decisions",
+  "sprint_start": "2026-03-16",
+  "sprint_end": "2026-03-23",
+  "stories": [
+    {
+      "id": "REFACTOR-02-001",
+      "title": "Document frontend Greenfield choices",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Design React 19 + Fluent UI v9 + Vite 3-face app using 31-eva-faces patterns"
+    },
+    {
+      "id": "REFACTOR-02-002",
+      "title": "Document backend Greenfield choices",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Design FastAPI + Agent Framework modular routers using 33-eva-brain-v2 patterns"
+    },
+    {
+      "id": "REFACTOR-02-003",
+      "title": "Document data layer Greenfield choices",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Determine Cosmos vs Postgres, design clean schema for Greenfield"
+    },
+    {
+      "id": "REFACTOR-02-004",
+      "title": "Document infrastructure Greenfield choices",
+      "size_fp": 5,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Deploy to existing App Service Plan - zero new infrastructure cost"
+    }
+  ],
+  "total_stories": 4,
+  "total_fp": 34,
+  "created_at": "2026-03-02T23:30:00Z"
+}

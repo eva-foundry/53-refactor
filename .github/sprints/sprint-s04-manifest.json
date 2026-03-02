@@ -1,0 +1,68 @@
+{
+  "sprint_id": "S04",
+  "phase": "Phase-2",
+  "sprint_name": "Greenfield Planning - AI Story Generation",
+  "sprint_start": "2026-03-23",
+  "sprint_end": "2026-03-30",
+  "stories": [
+    {
+      "id": "REFACTOR-02-005",
+      "title": "Generate Backend Greenfield stories with AI",
+      "size_fp": 21,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Use Foundry LLM to generate 100+ backend router stories using 33-eva-brain-v2 patterns"
+    },
+    {
+      "id": "REFACTOR-02-006",
+      "title": "Generate Frontend Greenfield stories with AI",
+      "size_fp": 21,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Use Foundry LLM to generate 150+ frontend component stories using 31-eva-faces patterns"
+    },
+    {
+      "id": "REFACTOR-02-007",
+      "title": "Generate Data Layer Greenfield stories with AI",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Generate 50+ container/schema stories with Cosmos or Postgres migrations"
+    },
+    {
+      "id": "REFACTOR-02-008",
+      "title": "Generate Observability & Security Greenfield stories with AI",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Generate 50+ OpenTelemetry, RBAC, secret management, and Key Vault stories"
+    },
+    {
+      "id": "REFACTOR-02-009",
+      "title": "Generate Testing & Validation Greenfield stories with AI",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Generate 50+ pytest unit, integration, E2E, and feature parity validation stories"
+    },
+    {
+      "id": "REFACTOR-02-010",
+      "title": "Generate Documentation Greenfield stories with AI",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Generate 30+ API documentation, architecture diagrams, and runbook stories"
+    },
+    {
+      "id": "REFACTOR-02-011",
+      "title": "Organize Greenfield stories into 18-sprint execution plan",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:planning-agent",
+      "description": "Group 500+ stories by epic, assign to sprints S05-S22, estimate capacity"
+    }
+  ],
+  "total_stories": 7,
+  "total_fp": 102,
+  "created_at": "2026-03-02T23:30:00Z"
+}
