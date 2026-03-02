@@ -344,86 +344,158 @@ Greenfield, Approved March 2, 2026)
 - ✅ Pattern reuse showcase (31-eva-faces, 33-eva-brain-v2, 28-rbac, 51-ACA)
 - ✅ Zero-infrastructure deployment (use existing sandbox resources)
 
-### Session 19 (March 2, 2026 12:30 PM - 2:30 PM ET)
+### Session 19 (March 2, 2026 12:30 PM - 4:39 PM ET)
 
 **Participants**: @agent:github-copilot, @user:marco.presta
- - Greenfield Focus)
 
-**Priority 1 (Next 30 min)**:
-- [x] Complete README.md corrections (Greenfield architecture)
-- [x] Update PLAN.md to Greenfield build stories
-- [x] Update STATUS.md with Greenfield strategy
-- [ ] Update ACCEPTANCE.md with Greenfield acceptance criteria
-- [ ] Create GitHub repository (eva-foundry/53-refactor)
-- [ ] Push corrected documents to GitHub
+**Timeline and Accomplishments**:
 
-**Priority 2 (Next 2 hours)**:
-- [ ] Discover marco* resources in 22-rg-sandbox (Postgres, Redis, Container Apps, Storage, Key Vault, App Insights)
-- [ ] Implement scripts/as-is-scanner.js (scan EVA-JP-v1.2 for **feature parity reference**, NOT code porting)
-- [ ] Implement scripts/migration-planner.py with **Greenfield AI prompts** (generate 500+ build-from-scratch stories, NOT migration stories)
+- **12:30 PM**: Session start - Cosmos DB incident resolved, Veritas-Model-ADO workflow enhancements complete
+- **2:20 PM**: User introduced Project 53-refactor: autonomous refactoring factory concept
+- **2:20-2:30 PM**: Created initial docs (README/PLAN/STATUS/ACCEPTANCE) - **INCORRECT ARCHITECTURE**
+- **2:35 PM**: **CRITICAL USER CORRECTION** - Architecture clarified:
+  - ❌ NOT Hybrid migration → ✅ **Greenfield rewrite** (standalone POC, NOT production replacement)
+  - ❌ NOT 43-eva-spark → ✅ Copy from **31-eva-faces/shared** (hooks, utils, types, layouts)
+  - ❌ NOT new Terraform/22-rg-sandbox → ✅ Use **existing EsDAICoE-Sandbox** marco* resources
+  - ✅ **High-quality POC** (like 51-ACA): MTI >= 80, test coverage >= 80%
+  - ✅ **180 hrs GitHub Codespaces** available
+  
+- **2:35-2:50 PM**: **Architecture corrections completed**:
+  - ✅ README.md (791 lines): Vision, Architecture, Infrastructure with actual resource names
+  - ✅ PLAN.md (991 lines): 40% complete (Phase 0-1 done, Phase 2-4 need rewrites)
+  - ✅ STATUS.md (this file): Greenfield strategy documented
+  - ✅ ACCEPTANCE.md (505 lines): Greenfield POC acceptance criteria
+  
+- **2:50-2:55 PM**: **Infrastructure discovery from inventory** (MARCO-INVENTORY-20260213-155026.md):
+  - ✅ Found 24 marco* resources in **EsDAICoE-Sandbox** (canadacentral/canadaeast)
+  - ✅ Cosmos DB: `marco-sandbox-cosmos` (existing)
+  - ✅ Storage: `marcosand20260203` (existing)
+  - ✅ Key Vault: `marcosandkv20260203` (existing)
+  - ✅ App Service Plan: `marco-sandbox-asp-backend` (existing)
+  - ✅ Container Registry: `marcosandacr20260203.azurecr.io` (existing)
+  - ❌ **NO Postgres** (placeholder "marco-eva-postgres" doesn't exist)
+  - ❌ **NO Redis** (placeholder "marco-eva-cache" doesn't exist)
+  - ❌ **NO Container Apps** (placeholder "marco-containerenv" doesn't exist)
+  - **Impact**: Updated README.md deployment strategy → **$0/month new infrastructure cost**
+  
+- **2:55 PM**: **GitHub repository created**: https://github.com/eva-foundry/53-refactor (public)
 
-**Priority 3 (Next 1 day)**:
-- [ ] Copy 31-eva-faces/shared to 53-refactor/output/shared (hooks: useAuth, useActingSession; utils: api-client, formatters; types: User, Session; layouts: AppLayout)
-- [ ] Implement agents/ (discovery-agent.yml for reference, planning-agent.yml with Greenfield prompts, execution-agent.yml with pattern sources, validation-agent.yml with quality gates)
-- [ ] Create .env with marco* resource connection strings
+- **2:56-2:59 PM**: **PLAN.md Phase 2-4 Greenfield rewrites** (~600 lines rewritten):
+  - Phase 2 Epic 3: "Evaluate migration options" → "Document Greenfield choices" (React 19 + Fluent UI v9, FastAPI + Agent Framework, marco-sandbox-cosmos)
+  - Phase 2 Epic 4: "Generate decomposition stories" → "Generate Greenfield stories" (build NEW routers using 33-eva-brain-v2 patterns)
+  - Phase 3: "Backend Decomposition" → "Backend Greenfield" (copy Agent Framework RAG from 33-eva-brain-v2, NOT port EVA-JP-v1.2)
+  - Phase 3: "Frontend Modularization" → "Frontend Greenfield" (copy 31-eva-faces patterns, NOT port EVA-JP-v1.2)
+  - Phase 3: "Data Migration" → "Data Layer Setup" (design NEW Cosmos containers, NOT port legacy schema)
+  - Phase 4: "API contract comparison" → "Feature parity validation" (validate features exist, implementation may differ)
+  
+- **2:59 PM**: **Git commit and push completed** (commit `69aaac6`):
+  - 6 files pushed to main branch: README.md, PLAN.md, STATUS.md, ACCEPTANCE.md, .gitignore, LICENSE
+  - All documentation now live on GitHub: https://github.com/eva-foundry/53-refactor
+  
+- **3:00-4:39 PM**: Explained 28-rbac patterns (JWT extraction, Cosmos DB mapping, FastAPI middleware, permission matrix), status documentation update
 
-**Priority 4 (Next 2 days)**:
-- [ ] Create .github/workflows/refactor-workflow.yml (discover reference → plan Greenfield WBS → execute write-from-scratch → validate quality gates)
-- [ ] Run Phase 1 Reference Analysis: as-is-scanner.js execution (feature inventory) workflow (discover → plan → execute → validate)
-- Success Criteria: 4 phases, 20 sprints, MTI 50→80 (60% improvement), test coverage 40%→80%, cost -40%
+**Key Decisions Made**:
+1. **Architecture**: Greenfield standalone POC (NOT production replacement, NOT migration)
+2. **Infrastructure**: Use existing EsDAICoE-Sandbox resources (marco-sandbox-cosmos, marcosand20260203, etc.) → **$0 new cost**
+3. **Patterns**: Copy from 31-eva-faces/shared, 33-eva-brain-v2, 28-rbac, 51-ACA (NOT port EVA-JP-v1.2 code)
+4. **Quality Bar**: High-quality POC like 51-ACA (MTI >= 80, test >= 80%)
+5. **Development**: GitHub Codespaces (180 hrs available) + local Docker fallback
 
-**Next Steps**:
-1. Complete ACCEPTANCE.md with phase-based success criteria
-2. Initialize git repository (git init, commit, push to https://github.com/eva-foundry/53-refactor)
-3. Implement as-is-scanner.js (scan EVA-JP-v1.2 → populate data model)
+**Completion Status (as of 4:39 PM ET)**:
+
+**Phase 0 Bootstrap: 70% COMPLETE**
+- ✅ README.md (791 lines) - Vision, Architecture, Infrastructure with actual marco* resources
+- ✅ PLAN.md (991 lines) - Complete WBS with Greenfield stories (Phase 0-4, 500+ stories planned)
+- ✅ STATUS.md (this file) - Development strategy, session timeline
+- ✅ ACCEPTANCE.md (505 lines) - Phase-based success criteria
+- ✅ .gitignore - Python, Node.js, Azure, .env exclusions
+- ✅ LICENSE - MIT
+- ✅ Git repository initialized and committed
+- ✅ GitHub repository created: https://github.com/eva-foundry/53-refactor
+- ✅ All files pushed to main branch (commit `69aaac6`)
+- ⏳ Scripts pending (as-is-scanner.js, migration-planner.py)
+- ⏳ Agent configs pending (discovery-agent.yml, planning-agent.yml, execution-agent.yml, validation-agent.yml)
+
+---
+
+## Next Actions (Updated 4:39 PM ET)
+
+---
+
+## Next Actions (Updated 4:39 PM ET)
+
+**Priority 1 (Next 2 hours) - Complete Bootstrap**:
+- [x] Complete README.md corrections (Greenfield architecture) - DONE 2:50 PM
+- [x] Complete PLAN.md Phase 2-4 rewrites (migration → Greenfield) - DONE 2:59 PM
+- [x] Update STATUS.md with Greenfield strategy - DONE 2:50 PM
+- [x] Update ACCEPTANCE.md with Greenfield acceptance criteria - DONE 2:50 PM
+- [x] Create GitHub repository (eva-foundry/53-refactor) - DONE 2:55 PM
+- [x] Discover actual marco* resources from inventory - DONE 2:52 PM
+- [x] Push all documents to GitHub - DONE 2:59 PM
+- [ ] Copy 31-eva-faces/shared to 53-refactor/output/shared (hooks, utils, types, layouts)
+
+**Priority 2 (Next 1 day) - Implement Scripts**:
+- [ ] Implement scripts/as-is-scanner.js (scan EVA-JP-v1.2 → extract features for parity reference, NOT code porting)
+- [ ] Implement scripts/migration-planner.py with **Greenfield AI prompts** (generate 500+ build-from-scratch stories)
+- [ ] Create .env with actual marco* resource connection strings:
+  ```bash
+  # Cosmos DB (existing marco-sandbox-cosmos)
+  COSMOS_ENDPOINT=https://marco-sandbox-cosmos.documents.azure.com:443/
+  COSMOS_KEY=<from marcosandkv20260203>
+  
+  # Storage (existing marcosand20260203)
+  AZURE_STORAGE_ACCOUNT=marcosand20260203
+  AZURE_STORAGE_KEY=<from marcosandkv20260203>
+  
+  # App Insights (existing marco-sandbox-appinsights)
+  APPINSIGHTS_CONNECTION_STRING=<from marcosandkv20260203>
+  ```
+
+**Priority 3 (Next 2 days) - Implement Agents**:
+- [ ] Implement agents/discovery-agent.yml (scan EVA-JP-v1.2 for feature inventory)
+- [ ] Implement agents/planning-agent.yml (with Greenfield prompts: "Build NEW code using patterns from 31-eva-faces")
+- [ ] Implement agents/execution-agent.yml (with pattern sources: "Copy Agent Framework from 33-eva-brain-v2")
+- [ ] Implement agents/validation-agent.yml (quality gates: MTI >= 70, test >= 80%)
+
+**Priority 4 (Next 1 week) - Run Phase 1**:
+- [ ] Create .github/workflows/refactor-workflow.yml (discover → plan → execute → validate)
+- [ ] Run Phase 1 Reference Analysis: as-is-scanner.js execution
+- [ ] Success Criteria: Feature inventory populated in data model, zero blockers for Phase 2
 4. Implement migration-planner.py (AI generates 500+ stories)
 5. Run Phase 1 Discovery (Veritas audit + as-is scanner)
 
 **Issues/Risks**:
-- None yet (Phase 0 Bootstrap has no blockers)
+- ⚠️ **Infrastructure Gap**: Placeholder resource names (marco-eva-postgres, marco-eva-cache, marco-containerenv) don't exist → **RESOLVED** (discovered actual resources: marco-sandbox-cosmos, marcosand20260203, marco-sandbox-asp-backend)
+- 🟢 **No Blockers**: Phase 0 Bootstrap 70% complete, all documentation corrected and pushed to GitHub
 
 **Notes**:
 - Project 53-refactor builds on completed Veritas-Model-ADO workflow enhancements:
-  - Enhancement 2 (seed-from-plan.py): Will seed 500+ stories automatically
+  - Enhancement 2 (seed-from-plan.py): Will seed 500+ stories automatically from PLAN.md
   - Enhancement 3 (Veritas quality gates): Will enforce MTI >= 70 + field population
   - Enhancement 1 (ADO bidirectional sync): Will keep WBS and ADO in sync during 20 sprints
-- First real-world test of full DPDCA automation workflow at scale
+- First real-world test of full DPDCA automation workflow at scale (500+ stories, 20 sprints)
+- Infrastructure discovery corrected deployment strategy: App Service (NOT Container Apps), Cosmos DB (NOT Postgres), **$0 new cost**
 
 ---
 
-## Next Actions (Immediate)
-
-**Priority 1 (Next 30 min)**:
-- [ ] Complete ACCEPTANCE.md with phase-based success criteria (checkboxes for Discovery, Planning, Execution, Validation)
-- [ ] Initialize git repository and push to https://github.com/eva-foundry/53-refactor
-
-**Priority 2 (Next 2 hours)**:
-- [ ] Implement scripts/as-is-scanner.js (scan EVA-JP-v1.2 → populate data model with services, endpoints, screens, containers)
-- [ ] Implement scripts/migration-planner.py (AI generates 500+ story WBS using Agent Framework)
-
-**Priority 3 (Next 1 day)**:
-- [ ] Implement scripts/gen-sprint-manifest.py (generate sprint execution plan for GitHub Actions matrix)
-- [ ] Implement agents/ (discovery-agent.yml, planning-agent.yml, execution-agent.yml, validation-agent.yml)
-
-**Priority 4 (Next 2 days)**:
-- [ ] Create .github/workflows/refactor-workflow.yml (discover → plan → execute → validate jobs)
-- [ ] Run Phase 1 Discovery: Veritas audit on EVA-JP-v1.2 + as-is-scanner.js execution
-
----
-
-## Project Health Dashboard
+## Project Health Dashboard (Updated 4:39 PM ET)
 
 | Category | Status | Notes |
 |---|---|---|
-| **Overall Health** | 🟢 HEALTHY | Phase 0 Bootstrap on track |
+| **Overall Health** | 🟢 HEALTHY | Phase 0 Bootstrap 70% complete |
+| **Bootstrap Progress** | 🟡 70% | Documentation done, scripts pending |
 | **Schedule** | 🟢 ON TRACK | Week 0 of 23, no delays |
-| **Budget** | 🟢 ON BUDGET | No Azure resources created yet |
-| **Quality** | 🟡 NOT MEASURED | MTI baseline TBD (Phase 1) |
-| **Risks** | 🟢 LOW | No blockers, Phase 0 has no dependencies |
-| **Team Morale** | 🟢 HIGH | Autonomous agents ready |
+| **Budget** | 🟢 ON BUDGET | **$0 new infrastructure** (uses existing marco* resources) |
+| **Quality** | 🟡 NOT MEASURED | MTI baseline TBD (Phase 1 Reference Analysis) |
+| **Documentation** | 🟢 COMPLETE | README/PLAN/STATUS/ACCEPTANCE all corrected and pushed |
+| **GitHub Repo** | 🟢 LIVE | https://github.com/eva-foundry/53-refactor |
+| **Risks** | 🟢 LOW | No blockers, infrastructure discovery resolved |
+| **Team Morale** | 🟢 HIGH | Autonomous agents ready for execution |
 
 ---
 
-**END OF STATUS.md v1.0.0**
+**END OF STATUS.md v1.1.0**
 
-**Next Update**: After Phase 0 Bootstrap completes (when git repository initialized + ACCEPTANCE.md created)
+**Last Updated**: March 2, 2026 4:39 PM ET (Session 19)
+
+**Next Update**: After scripts implemented (as-is-scanner.js, migration-planner.py) and 31-eva-faces/shared copied
