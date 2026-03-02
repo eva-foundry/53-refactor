@@ -1,0 +1,128 @@
+name: Sprint Agent
+description: Executes individual stories from sprint manifest
+
+on:
+  workflow_dispatch:
+    inputs:
+      story-id:
+        description: "Story ID to execute (e.g., REFACTOR-01-001)"
+        required: true
+        type: string
+      sprint:
+        description: "Sprint ID (e.g., S01)"
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      story-id:
+        description: "Story ID to execute"
+        required: true
+        type: string
+      sprint:
+        description: "Sprint ID"
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: "3.10"
+  NODE_VERSION: "20"
+
+jobs:
+  execute-story:
+    runs-on: ubuntu-latest
+    env:
+      STORY_ID: ${{ github.event.inputs.story-id }}
+      SPRINT: ${{ github.event.inputs.sprint || 'S01' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Parse story metadata
+        id: story
+        run: |
+          echo "Story: ${{ env.STORY_ID }}"
+          echo "Sprint: ${{ env.SPRINT }}"
+          # Placeholder: Would parse PLAN.md to get story details
+          echo "category=backend" >> $GITHUB_OUTPUT
+
+      - name: Log scope
+        run: |
+          echo "[INFO] Executing story: ${{ env.STORY_ID }}"
+          echo "[INFO] Sprint: ${{ env.SPRINT }}"
+          echo "[INFO] Category: ${{ steps.story.outputs.category }}"
+
+      - name: Generate code artifacts
+        continue-on-error: true
+        run: |
+          echo "[INFO] Placeholder: Code generation step"
+          echo "[INFO] Would call Foundry LLM with story context"
+          mkdir -p src/generated/${{ env.STORY_ID }}
+
+      - name: Run unit tests
+        continue-on-error: true
+        run: |
+          echo "[INFO] Placeholder: Run pytest"
+          echo "[INFO] pip install -q pytest pytest-cov"
+
+      - name: Run linting
+        continue-on-error: true
+        run: |
+          echo "[INFO] Placeholder: Run pyright"
+          echo "[INFO] pip install -q pyright"
+
+      - name: Verify quality gates
+        run: |
+          echo "[INFO] Placeholder: Verify MTI gate"
+          python scripts/check-mti-gate.py --audit .eva/audit-results.json --target-mti 80
+
+      - name: Stage artifacts
+        run: |
+          git config user.name "agent-execution"
+          git config user.email "agent@eva-foundry.dev"
+          git add -A
+
+      - name: Verify no uncommitted changes
+        run: |
+          if ! git diff --cached --quiet; then
+            echo "[INFO] Changes staged for commit"
+            git diff --cached --name-status
+          else
+            echo "[INFO] No changes to commit"
+          fi
+
+      - name: Dry-run commit
+        run: |
+          git diff --cached --stat
+
+      - name: Commit story completion
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          git commit -m "feat(53-refactor): complete [${{ env.STORY_ID }}] ${{ env.STORY_TITLE }}"
+          git push origin ${{ github.head_ref || github.ref_name }}
+
+      - name: Update evidence layer
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "[INFO] Placeholder: Update evidence layer"
+          echo "[INFO] Would record story completion to data model"
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## Story Execution: ${{ env.STORY_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Sprint: ${{ env.SPRINT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Category: ${{ steps.story.outputs.category }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

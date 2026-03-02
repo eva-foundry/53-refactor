@@ -1,0 +1,60 @@
+name: Planning Agent
+description: Generates Greenfield build WBS and sprint planning via AI
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Discovery Agent"]
+    types: [completed]
+
+env:
+  PYTHON_VERSION: "3.10"
+  REFACTOR_STRATEGY: "greenfield"
+
+jobs:
+  plan-greenfield:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -q pydantic requests python-dotenv
+
+      - name: Generate Greenfield WBS via AI
+        run: |
+          python scripts/migration-planner.py \
+            --feature-parity ".eva/discovery.json" \
+            --strategy greenfield \
+            --output "PLAN-greenfield.md" \
+            --foundry-project "${{ secrets.FOUNDRY_PROJECT }}" \
+            --foundry-deployment "${{ secrets.FOUNDRY_DEPLOYMENT }}"
+
+      - name: Generate sprint manifest
+        run: |
+          python scripts/gen-sprint-manifest.py \
+            --plan "PLAN-greenfield.md" \
+            --output ".github/sprints/SPRINT_MANIFEST.json" \
+            --sprint "S01" \
+            --phase "phase-1-reference-analysis"
+
+      - name: Seed WBS to data model
+        run: |
+          python scripts/seed-from-plan.py \
+            --plan "PLAN-greenfield.md" \
+            --data-model-url "${{ secrets.DATA_MODEL_URL }}" \
+            --project "53-refactor"
+
+      - name: Commit and push
+        if: success()
+        run: |
+          git config user.name "agent-planning"
+          git config user.email "agent@eva-foundry"
+          git add PLAN-greenfield.md .github/sprints/ docs/risk-assessment.md
+          git commit -m "feat(53-refactor): planning phase - greenfield WBS with 500+ stories"
+          git push origin ${{ github.head_ref || github.ref_name }}

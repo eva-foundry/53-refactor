@@ -1,0 +1,179 @@
+name: Refactor Workflow
+description: Full DPDCA loop for Greenfield refactoring (Discover -> Plan -> Execute -> Validate)
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Which phase to run (discover, plan, execute, validate, all)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - discover
+          - plan
+          - execute
+          - validate
+          - all
+  schedule:
+    - cron: "0 8 * * 1"  # Weekly on Mondays at 8 AM
+
+env:
+  PYTHON_VERSION: "3.10"
+  NODE_VERSION: "20"
+
+jobs:
+  discover:
+    if: ${{ github.event.inputs.phase == 'discover' || github.event.inputs.phase == 'all' }}
+    runs-on: ubuntu-latest
+    outputs:
+      discovery-status: ${{ steps.discover.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run discovery scanner
+        id: discover
+        run: |
+          node scripts/as-is-scanner.js ./eva-jp-v1.2 .eva/discovery.json reference-only
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Upload discovery results
+        uses: actions/upload-artifact@v3
+        with:
+          name: discovery-results
+          path: |
+            .eva/discovery.json
+            docs/as-is-feature-set.md
+
+  plan:
+    needs: discover
+    if: success()
+    runs-on: ubuntu-latest
+    outputs:
+      plan-status: ${{ steps.plan.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download discovery results
+        uses: actions/download-artifact@v3
+        with:
+          name: discovery-results
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate Greenfield WBS
+        id: plan
+        env:
+          FOUNDRY_PROJECT: ${{ secrets.FOUNDRY_PROJECT }}
+          FOUNDRY_DEPLOYMENT: ${{ secrets.FOUNDRY_DEPLOYMENT }}
+        run: |
+          python scripts/migration-planner.py \
+            --feature-parity .eva/discovery.json \
+            --strategy greenfield \
+            --output PLAN-greenfield.md \
+            --foundry-project "$FOUNDRY_PROJECT" \
+            --foundry-deployment "$FOUNDRY_DEPLOYMENT"
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Generate sprint manifest
+        run: |
+          python scripts/gen-sprint-manifest.py \
+            --plan PLAN-greenfield.md \
+            --output .github/sprints/SPRINT_MANIFEST.json \
+            --sprint "S01" \
+            --phase "phase-1-reference-analysis"
+
+      - name: Upload plan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: plan-results
+          path: |
+            PLAN-greenfield.md
+            .github/sprints/
+            docs/risk-assessment.md
+
+  execute:
+    needs: plan
+    if: ${{ github.event.inputs.phase == 'execute' || github.event.inputs.phase == 'all' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        story-batch:
+          - backend-foundation
+          - frontend-foundation
+          - integration
+          - testing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download plan results
+        uses: actions/download-artifact@v3
+        with:
+          name: plan-results
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Execute story batch
+        continue-on-error: true
+        run: |
+          echo "[INFO] Batch: ${{ matrix.story-batch }}"
+          echo "[INFO] Running stories from sprint manifest"
+          ls -la .github/sprints/
+
+      - name: Run quality gates
+        continue-on-error: true
+        run: |
+          echo "[INFO] Placeholder: Would run Veritas audit"
+          echo "[INFO] Placeholder: Would run tests"
+          echo "[INFO] Placeholder: Would check coverage"
+
+  validate:
+    needs: [plan, execute]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Verify results
+        run: |
+          echo "[INFO] Placeholder: Validation steps"
+          echo "Discover: ${{ needs.discover.outputs.discovery-status }}"
+          echo "Plan: ${{ needs.plan.outputs.plan-status }}"
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## Refactor Workflow Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Discover | ${{ needs.discover.outputs.discovery-status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Plan | ${{ needs.plan.outputs.plan-status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Execute | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

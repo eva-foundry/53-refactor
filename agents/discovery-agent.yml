@@ -1,0 +1,48 @@
+name: Discovery Agent
+description: Scans EVA-JP-v1.2 to extract feature parity reference data
+
+on:
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.10"
+  EVA_DISCOVERY_MODE: "reference-only"
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run discovery scanner
+        run: |
+          python scripts/as-is-scanner.py \
+            --source-repo "${{ github.workspace }}/eva-jp-v1.2" \
+            --output ".eva/discovery.json" \
+            --mode reference-only
+
+      - name: Generate feature parity report
+        run: |
+          python scripts/generate-feature-parity.py \
+            --discovery ".eva/discovery.json" \
+            --output "docs/as-is-feature-set.md"
+
+      - name: Seed to data model
+        run: |
+          python scripts/seed-feature-parity.py \
+            --discovery ".eva/discovery.json" \
+            --data-model-url "${{ secrets.DATA_MODEL_URL }}"
+
+      - name: Commit and push
+        if: success()
+        run: |
+          git config user.name "agent-discovery"
+          git config user.email "agent@eva-foundry"
+          git add .eva/discovery.json docs/as-is-feature-set.md
+          git commit -m "feat(53-refactor): discovery phase - feature parity reference data"
+          git push origin ${{ github.head_ref || github.ref_name }}

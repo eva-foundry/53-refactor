@@ -1,0 +1,64 @@
+name: Execution Agent
+description: Executes Greenfield build stories autonomously via GitHub Actions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1-5"  # Daily at 8 AM on weekdays
+
+env:
+  PYTHON_VERSION: "3.10"
+  NODE_VERSION: "20"
+
+jobs:
+  execute-sprint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        story-batch: ["backend-foundation", "frontend-foundation", "integration", "testing"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -q -r requirements.txt
+          npm ci
+
+      - name: Execute story batch
+        run: |
+          python scripts/execute-stories.py \
+            --batch "${{ matrix.story-batch }}" \
+            --sprint "${{ env.CURRENT_SPRINT }}" \
+            --data-model-url "${{ secrets.DATA_MODEL_URL }}"
+
+      - name: Run quality gates (Veritas)
+        run: |
+          node "${{ github.workspace }}/node_modules/.bin/veritas" audit-repo --repo .
+
+      - name: Commit story artifacts
+        if: success()
+        run: |
+          git config user.name "agent-execution"
+          git config user.email "agent@eva-foundry"
+          git add -A
+          git commit -m "feat(53-refactor): execute ${{ matrix.story-batch }} stories"
+          git push origin ${{ github.head_ref || github.ref_name }}
+
+      - name: Update evidence layer
+        if: always()
+        run: |
+          python scripts/update-evidence.py \
+            --story-batch "${{ matrix.story-batch }}" \
+            --data-model-url "${{ secrets.DATA_MODEL_URL }}"

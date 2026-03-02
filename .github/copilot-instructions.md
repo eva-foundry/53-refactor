@@ -22,7 +22,7 @@
 Before answering any question or writing any code:
 
 1. **Establish $base** (ACA primary -- run the bootstrap block in Section 3.1 first):
-   - ACA (24x7, Cosmos-backed, no auth): `https://marco-eva-data-model.livelyflower-7990abc7b.canadacentral.azurecontainerapps.io`
+   - ACA (24x7, Cosmos-backed, no auth): `https://marco-eva-data-model.livelyflower-7990bc7b.canadacentral.azurecontainerapps.io`
    - Local dev fallback only: `http://localhost:8010`
    - `$base` must be set before any model query in this session.
 
@@ -101,7 +101,7 @@ When working on Azure infrastructure, always consult the workspace-level Azure b
 
 ```powershell
 # Primary -- ACA (24x7 Cosmos-backed, no auth required, always up)
-$base = "https://marco-eva-data-model.livelyflower-7990abc7b.canadacentral.azurecontainerapps.io"
+$base = "https://marco-eva-data-model.livelyflower-7990bc7b.canadacentral.azurecontainerapps.io"
 $h = Invoke-RestMethod "$base/health" -ErrorAction SilentlyContinue
 # Local fallback -- only if ACA is in a rare maintenance window
 if (-not $h) {

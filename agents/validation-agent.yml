@@ -1,0 +1,82 @@
+name: Validation Agent
+description: Validates Greenfield build quality gates and feature parity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.10"
+  TARGET_MTI: 80
+  TARGET_COVERAGE: 0.80
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -q pytest pytest-cov pyright
+
+      - name: Run Veritas audit
+        run: |
+          python -m veritas.cli audit-repo \
+            --repo . \
+            --output .eva/audit-results.json
+
+      - name: Check MTI score
+        run: |
+          python scripts/check-mti-gate.py \
+            --audit ".eva/audit-results.json" \
+            --target-mti "${{ env.TARGET_MTI }}"
+
+      - name: Run tests
+        run: |
+          pytest -v --cov=. --cov-report=json --cov-report=html
+
+      - name: Check coverage
+        run: |
+          python scripts/check-coverage-gate.py \
+            --coverage-report "coverage.json" \
+            --target "${{ env.TARGET_COVERAGE }}"
+
+      - name: Verify feature parity
+        run: |
+          python scripts/verify-feature-parity.py \
+            --greenfield-features ".eva/discovery.json" \
+            --reference-features "docs/as-is-feature-set.md" \
+            --output ".eva/parity-report.json"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-results
+          path: |
+            .eva/
+            htmlcov/
+
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('.eva/audit-results.json'));
+            const parity = JSON.parse(fs.readFileSync('.eva/parity-report.json'));
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Validation Results\n\n- MTI Score: ${audit.mti_score}/${env.TARGET_MTI}\n- Feature Parity: ${parity.parity_score}%`
+            });
