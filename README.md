@@ -6,6 +6,7 @@
 **Development**: GitHub Codespaces (180 hrs available)  
 **Infrastructure**: Use existing marco* resources in 22-rg-sandbox (no new resources)  
 **Strategy**: Greenfield rewrite leveraging Veritas-Model-ADO workflow  
+**ADO Project**: **EVA-Refactor** (Dedicated, not shared with eva-poc) — https://dev.azure.com/marcopresta/EVA-Refactor  
 
 ## Vision
 

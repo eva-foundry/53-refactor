@@ -1,13 +1,15 @@
 # PLAN.md - Project 53: EVA Refactor Factory
 
 **Version**: 1.0.0  
-**Last Updated**: March 2, 2026  
-**Sprint**: Pre-Sprint (Planning Phase)  
-**Status**: Bootstrap
+**Last Updated**: March 2, 2026 5:12 PM ET (Phase 2 audit complete)  
+**Sprint**: Phase 2 Complete → Ready for Phase 3 Execution  
+**Status**: Greenfield Planning Complete (115 stories seeded, architecture documented)
 
 ---
 
 ## Project Metadata
+
+**IMPORTANT**: Project 53 has its **OWN DEDICATED Azure DevOps project** (`EVA-Refactor`) and is **NOT mixed** with `eva-poc` or any other project.
 
 ```yaml
 project_id: 53-refactor
@@ -23,6 +25,10 @@ target_mti: 80
 target_coverage: 0.80
 infrastructure: existing_marco_resources  # Use 22-rg-sandbox marco* resources
 quality_bar: high  # Like 51-ACA reference implementation
+ado_project_name: EVA-Refactor
+ado_epic_id: '33'
+ado_team: EVA-Refactor Team
+ado_url: https://dev.azure.com/marcopresta/EVA-Refactor
 ```
 
 ---

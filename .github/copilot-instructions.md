@@ -5,6 +5,7 @@
 **Project**: 53-refactor -- AI-Driven Legacy Modernization at Scale
 **Path**: `C:\AICOE\eva-foundry\53-refactor\`
 **Stack**: Python (FastAPI agents), React (TypeScript), Node.js (GitHub Actions), SQL (PostgreSQL)
+**ADO Project**: **EVA-Refactor** (Dedicated, not shared) — https://dev.azure.com/marcopresta/EVA-Refactor
 
 > This file is the Copilot operating manual for this repository.
 > PART 1 is universal -- identical across all EVA Foundation projects.
@@ -204,7 +205,32 @@ writes. If a PUT fails on the first attempt, the first diagnosis is: is the body
 
 ---
 
-### PART 2.1: Commands & Quick Start
+### PART 2.1: Azure DevOps Configuration (DEDICATED PROJECT)
+
+⚠️ **CRITICAL**: Project 53 **has its own dedicated Azure DevOps project** and is **NOT mixed** with `eva-poc` or `project-52`.
+
+| Setting | Value |
+|---|---|
+| **ADO Project Name** | EVA-Refactor |
+| **ADO Project URL** | https://dev.azure.com/marcopresta/EVA-Refactor |
+| **ADO Epic ID** | 33 (in EVA-Refactor project, not eva-poc) |
+| **ADO Team** | EVA-Refactor Team |
+| **Work Item Prefix** | REFACTOR-* (e.g., REFACTOR-03-001, REFACTOR-11-010) |
+| **Sync Direction** | Bidirectional (Pull + Push via 38-ado-poc) |
+| **Data Model Reference** | `/model/projects/53-refactor` |
+
+**Why Dedicated?**: Project 53 is a standalone greenfield POC that requires independent:
+- Sprint planning and backlog management
+- Velocity tracking (separate burndown)
+- Work item lifecycle (own epic/feature/story hierarchy)
+- Cost attribution and resource allocation
+- Team assignments and permissions
+
+Isolation from eva-poc prevents cross-project contamination of metrics and sprint state.
+
+---
+
+### PART 2.2: Commands & Quick Start
 
 **Test Execution**:
 ```bash
@@ -247,7 +273,7 @@ node "C:\AICOE\eva-foundry\48-eva-veritas\src\cli.js" dependency-audit --repo "C
 
 ---
 
-### PART 2.2: Project Structure
+### PART 2.3: Project Structure
 
 ```
 53-refactor/
@@ -280,7 +306,7 @@ node "C:\AICOE\eva-foundry\48-eva-veritas\src\cli.js" dependency-audit --repo "C
 
 ---
 
-### PART 2.3: Key Endpoints (Data Model Queries)
+### PART 2.4: Key Endpoints (Data Model Queries)
 
 **Refactor Project WBS**:
 ```powershell
@@ -317,7 +343,7 @@ Invoke-RestMethod "$base/model/screens/" | Where-Object { $_.api_calls -contains
 
 ---
 
-### PART 2.4: Quality Gates (ACCEPTANCE.md)
+### PART 2.5: Quality Gates (ACCEPTANCE.md)
 
 **Test Coverage**: >= 80% (pytest output)
 **Veritas MTI**: >= 70 (Phase 3+)
@@ -329,7 +355,7 @@ All gates must **PASS** before merging to main.
 
 ---
 
-### PART 2.5: Key Patterns & Anti-Patterns
+### PART 2.6: Key Patterns & Anti-Patterns
 
 **Pattern: Veritas-Model-ADO Loop**
 
@@ -372,7 +398,7 @@ Never manually copy-paste code from EVA-JP-v1.2. Always:
 
 ---
 
-### PART 2.6: Common Blockers & Resolutions
+### PART 2.7: Common Blockers & Resolutions
 
 **Blocker: "refactor_agent cannot find endpoint definition"**
 - **Cause**: Endpoint not in data model (legacy system not scanned yet)
@@ -392,7 +418,7 @@ Never manually copy-paste code from EVA-JP-v1.2. Always:
 
 ---
 
-### PART 2.7: Debugging
+### PART 2.8: Debugging
 
 **Enable Agent Traces**:
 ```bash
@@ -425,7 +451,7 @@ gh run view --repo eva-foundry/53-refactor --log
 
 ---
 
-### PART 2.8: Deployment
+### PART 2.9: Deployment
 
 **Staging** (before main):
 ```bash
@@ -448,7 +474,7 @@ git push origin develop:main
 
 ---
 
-### PART 2.9: Related Projects & Resources
+### PART 2.10: Related Projects & Resources
 
 **Data Model** (source of truth): [37-data-model](https://github.com/eva-foundry/37-data-model)
 **Veritas** (quality gates + traceability): [48-eva-veritas](https://github.com/eva-foundry/48-eva-veritas)
