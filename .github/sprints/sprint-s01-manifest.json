@@ -1,0 +1,52 @@
+{
+  "sprint_id": "S01",
+  "phase": "Phase-1",
+  "sprint_name": "Reference Analysis - Backend Discovery",
+  "sprint_start": "2026-03-02",
+  "sprint_end": "2026-03-09",
+  "stories": [
+    {
+      "id": "REFACTOR-01-001",
+      "title": "Scan EVA-JP-v1.2 backend services",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:discovery-agent",
+      "description": "Extract FastAPI routes, endpoints, services from EVA-JP-v1.2 backend"
+    },
+    {
+      "id": "REFACTOR-01-002",
+      "title": "Scan EVA-JP-v1.2 frontend components",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:discovery-agent",
+      "description": "Extract React pages, components, screens from EVA-JP-v1.2 frontend"
+    },
+    {
+      "id": "REFACTOR-01-003",
+      "title": "Extract API contracts and dependencies",
+      "size_fp": 13,
+      "status": "ready",
+      "assignee": "agent:discovery-agent",
+      "description": "Parse OpenAPI schemas, endpoint dependencies, relationship graph"
+    },
+    {
+      "id": "REFACTOR-01-004",
+      "title": "Identify technical debt and anti-patterns",
+      "size_fp": 8,
+      "status": "ready",
+      "assignee": "agent:discovery-agent",
+      "description": "Document monolithic structure, hardcoded config, missing tests, sync operations"
+    },
+    {
+      "id": "REFACTOR-01-005",
+      "title": "Run baseline Veritas audit on EVA-JP-v1.2",
+      "size_fp": 5,
+      "status": "ready",
+      "assignee": "agent:github-copilot",
+      "description": "Establish baseline MTI, coverage, complexity metrics"
+    }
+  ],
+  "total_stories": 5,
+  "total_fp": 42,
+  "created_at": "2026-03-02T22:00:00Z"
+}
