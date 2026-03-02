@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
+# EVA-STORY: REFACTOR-03-001
 """
 sprint_context.py -- Unified Sprint Context for Telemetry & Metrics
 
-Tracks:
-- Correlation ID for traceability
-- Timeline points (created, submitted, response, applied, tested, committed)
-- LM call telemetry (tokens, cost, model)
-- Phase execution duration
-- Logs with automatic correlation ID propagation
+Unified sprint execution context: correlation ID + LM tracing + timeline.
+
+Timeline Points (6 total):
+  - created:   Sprint context initialized
+  - submitted: Story execution started
+  - response:  LM response received
+  - applied:   Code changes applied
+  - tested:    Tests executed
+  - committed: Changes committed to git
+
+Usage:
+    ctx = SprintContext("REFACTOR-S05-20260302-a1b2c3d4")
+    ctx.log("D1", "Starting discovery phase")
+    call = ctx.record_lm_call(model="gpt-4o-mini", tokens_in=1000, tokens_out=500, phase="D1")
+    ctx.mark_timeline("response")
+    ctx.save()  # Writes .eva/sprints/S05-a1b2c3d4-context.json
 """
 
 import json
@@ -15,6 +26,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+
+# Import RefactorLMTracer from same directory
+from refactor_lm_tracer import RefactorLMTracer
 
 
 class SprintContext:
@@ -48,16 +62,13 @@ class SprintContext:
         else:
             self.sprint_id = "S00"
         
+        # Initialize tracer
+        self.tracer = RefactorLMTracer(correlation_id, repo_root=str(self.repo_root))
+        
         # Timeline tracking
         self.timeline: Dict[str, str] = {
             "created": self._now_iso()
         }
-        
-        # LM call tracking
-        self.lm_calls: List[Dict[str, Any]] = []
-        self.total_tokens_in = 0
-        self.total_tokens_out = 0
-        self.total_cost = 0.0
         
         # Log buffer
         self.logs: List[str] = []
@@ -101,7 +112,7 @@ class SprintContext:
                       response_text: str = "", 
                       error: Optional[str] = None) -> Dict[str, Any]:
         """
-        Record an LM call with telemetry.
+        Record an LM call with telemetry (delegates to tracer).
         
         Args:
             model: Model name (e.g., "gpt-4o", "gpt-4o-mini")
@@ -115,35 +126,23 @@ class SprintContext:
         Returns:
             LM call record
         """
-        # Calculate cost (GitHub Models: gpt-4o-mini is free, gpt-4o has cost)
-        cost = 0.0
-        if model == "gpt-4o":
-            # Azure OpenAI pricing: $0.03/1K input, $0.06/1K output
-            cost = (tokens_in / 1000 * 0.03) + (tokens_out / 1000 * 0.06)
-        
-        call_record = {
-            "model": model,
-            "tokens_in": tokens_in,
-            "tokens_out": tokens_out,
-            "phase": phase,
-            "duration_ms": duration_ms,
-            "cost_usd": round(cost, 8),
-            "timestamp": self._now_iso(),
-            "error": error,
-            "response_preview": response_text[:200] if response_text else ""
-        }
-        
-        self.lm_calls.append(call_record)
-        self.total_tokens_in += tokens_in
-        self.total_tokens_out += tokens_out
-        self.total_cost += cost
+        # Delegate to tracer
+        call = self.tracer.record_call(
+            model=model,
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            phase=phase,
+            response_text=response_text,
+            error=error
+        )
         
         # Log with ASCII arrow for Windows compatibility
         status = "FAIL" if error else "OK"
+        cost = call._calculate_cost()
         self.log(phase, 
                 f"LM call [{status}]: {model} | {tokens_in}->{tokens_out} tokens | ${cost:.6f} | {duration_ms}ms")
         
-        return call_record
+        return call.to_dict()
     
     def mark_timeline(self, point: str) -> str:
         """
@@ -177,17 +176,13 @@ class SprintContext:
     
     def get_summary(self) -> Dict[str, Any]:
         """Get current sprint context summary."""
+        lm_summary = self.tracer.get_summary()
+        
         return {
             "correlation_id": self.correlation_id,
             "sprint_id": self.sprint_id,
             "timeline": self.timeline,
-            "lm_summary": {
-                "total_calls": len(self.lm_calls),
-                "total_tokens_in": self.total_tokens_in,
-                "total_tokens_out": self.total_tokens_out,
-                "total_cost_usd": round(self.total_cost, 6),
-                "calls": self.lm_calls
-            },
+            "lm_summary": lm_summary,
             "metrics": self.metrics,
             "log_count": len(self.logs)
         }
@@ -215,6 +210,9 @@ class SprintContext:
         
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
+        
+        # Also save LM trace separately to .eva/traces/
+        self.tracer.save()
         
         self.log("save", f"Context saved to {filepath}")
         
