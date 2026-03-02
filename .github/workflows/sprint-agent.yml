@@ -1,128 +1,100 @@
+# Sprint Agent Workflow -- 53-refactor
+# Trigger: GitHub Issue labeled "sprint-task"
+# Model:   gpt-4o-mini via GitHub Models API (free tier)
+#
+# Processes a FULL SPRINT from one issue:
+#   - Parses the sprint issue body to extract SPRINT_MANIFEST JSON
+#   - Executes each story in sequence: D->P->D->C->A
+#   - Posts a progress comment after EACH story
+#   - Posts a final sprint summary comment when all stories complete
+#   - Updates data model with status and telemetry
+#   - Generates evidence receipts in .eva/evidence/
+#
+# Issue format: see .github/SPRINT_ISSUE_TEMPLATE.md
+# Manifest format: <!-- SPRINT_MANIFEST { ... } -->
+
 name: Sprint Agent
-description: Executes individual stories from sprint manifest
 
 on:
+  issues:
+    types: [labeled]
   workflow_dispatch:
     inputs:
-      story-id:
-        description: "Story ID to execute (e.g., REFACTOR-01-001)"
+      issue_number:
+        description: Sprint issue number
         required: true
-        type: string
-      sprint:
-        description: "Sprint ID (e.g., S01)"
-        required: false
-        type: string
-  workflow_call:
-    inputs:
-      story-id:
-        description: "Story ID to execute"
-        required: true
-        type: string
-      sprint:
-        description: "Sprint ID"
-        required: false
-        type: string
-
-env:
-  PYTHON_VERSION: "3.10"
-  NODE_VERSION: "20"
+        type: number
 
 jobs:
-  execute-story:
+  sprint:
+    name: "Execute Sprint"
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'sprint-task')
     runs-on: ubuntu-latest
-    env:
-      STORY_ID: ${{ github.event.inputs.story-id }}
-      SPRINT: ${{ github.event.inputs.sprint || 'S01' }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      models: read
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.12"
+          cache: pip
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Parse story metadata
-        id: story
+      - name: Install dependencies
         run: |
-          echo "Story: ${{ env.STORY_ID }}"
-          echo "Sprint: ${{ env.SPRINT }}"
-          # Placeholder: Would parse PLAN.md to get story details
-          echo "category=backend" >> $GITHUB_OUTPUT
+          pip install --quiet requests openai ruff pytest pytest-asyncio httpx
 
-      - name: Log scope
+      - name: Resolve issue number
+        id: resolve
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "[INFO] Executing story: ${{ env.STORY_ID }}"
-          echo "[INFO] Sprint: ${{ env.SPRINT }}"
-          echo "[INFO] Category: ${{ steps.story.outputs.category }}"
-
-      - name: Generate code artifacts
-        continue-on-error: true
-        run: |
-          echo "[INFO] Placeholder: Code generation step"
-          echo "[INFO] Would call Foundry LLM with story context"
-          mkdir -p src/generated/${{ env.STORY_ID }}
-
-      - name: Run unit tests
-        continue-on-error: true
-        run: |
-          echo "[INFO] Placeholder: Run pytest"
-          echo "[INFO] pip install -q pytest pytest-cov"
-
-      - name: Run linting
-        continue-on-error: true
-        run: |
-          echo "[INFO] Placeholder: Run pyright"
-          echo "[INFO] pip install -q pyright"
-
-      - name: Verify quality gates
-        run: |
-          echo "[INFO] Placeholder: Verify MTI gate"
-          python scripts/check-mti-gate.py --audit .eva/audit-results.json --target-mti 80
-
-      - name: Stage artifacts
-        run: |
-          git config user.name "agent-execution"
-          git config user.email "agent@eva-foundry.dev"
-          git add -A
-
-      - name: Verify no uncommitted changes
-        run: |
-          if ! git diff --cached --quiet; then
-            echo "[INFO] Changes staged for commit"
-            git diff --cached --name-status
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "ISSUE_NUM=${{ inputs.issue_number }}" >> "$GITHUB_ENV"
           else
-            echo "[INFO] No changes to commit"
+            echo "ISSUE_NUM=${{ github.event.issue.number }}" >> "$GITHUB_ENV"
           fi
 
-      - name: Dry-run commit
+      - name: Configure git identity
         run: |
-          git diff --cached --stat
+          git config user.name "REFACTOR Sprint Agent"
+          git config user.email "agent@eva-foundry.dev"
 
-      - name: Commit story completion
-        if: github.event_name != 'workflow_dispatch'
+      - name: Run sprint agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          REFACTOR_DATA_MODEL_URL: https://marco-eva-data-model.livelyflower-7990bc7b.canadacentral.azurecontainerapps.io
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+          ADO_WORKITEMS_PAT: ${{ secrets.ADO_WORKITEMS_PAT }}
         run: |
-          git commit -m "feat(53-refactor): complete [${{ env.STORY_ID }}] ${{ env.STORY_TITLE }}"
-          git push origin ${{ github.head_ref || github.ref_name }}
+          python3 .github/scripts/sprint_agent.py \
+            --issue "$ISSUE_NUM" \
+            --repo "$GH_REPO"
 
-      - name: Update evidence layer
+      - name: Upload sprint artifacts
         if: always()
-        continue-on-error: true
-        run: |
-          echo "[INFO] Placeholder: Update evidence layer"
-          echo "[INFO] Would record story completion to data model"
-
-      - name: Create job summary
-        if: always()
-        run: |
-          echo "## Story Execution: ${{ env.STORY_ID }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Sprint: ${{ env.SPRINT }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Category: ${{ steps.story.outputs.category }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        uses: actions/upload-artifact@v4
+        with:
+          name: "sprint-issue-${{ env.ISSUE_NUM }}-artifacts"
+          path: |
+            sprint-state.json
+            sprint-summary.md
+            .eva/evidence/
+            .eva/sprints/
+            .eva/traces/
+            .eva/locks/
+            lint-result.txt
+            test-collect.txt
+          retention-days: 30
+          if-no-files-found: warn
