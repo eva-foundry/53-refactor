@@ -13,13 +13,16 @@
 project_id: 53-refactor
 project_name: EVA Refactor Factory
 maturity: idea
-source_system: EVA-JP-v1.2
-target_system: 53-refactor-output
-migration_strategy: hybrid
+reference_system: EVA-JP-v1.2  # Feature parity reference (NOT source for code porting)
+target_system: 53-refactor-output  # Greenfield standalone POC
+migration_strategy: greenfield  # Build from scratch, NOT port/decompose
+development_environment: github_codespaces  # 180 hrs available
 total_sprints: 20
 sprint_duration: 1_week
 target_mti: 80
 target_coverage: 0.80
+infrastructure: existing_marco_resources  # Use 22-rg-sandbox marco* resources
+quality_bar: high  # Like 51-ACA reference implementation
 ```
 
 ---
@@ -42,40 +45,54 @@ Initialize Project 53-refactor infrastructure, governance documents, and data mo
 - [ ] LICENSE (MIT)
 
 #### [REFACTOR-00-002] Create discovery agent
-**Size**: M | **Status**: planned | **Assignee**: @agent:discovery-
-
-agent
+**Size**: M | **Status**: planned | **Assignee**: @agent:discovery-agent
 
 Scripts:
-- `scripts/as-is-scanner.js`: Scans EVA-JP-v1.2, populates data model
+- `scripts/as-is-scanner.js`: Scans EVA-JP-v1.2 for **feature parity reference** (NOT for code porting)
 - `agents/discovery-agent.yml`: GitHub Copilot agent config
 
 Outputs:
-- Data Model records: services, endpoints, screens, containers
-- `.eva/discovery.json`: As-is architecture snapshot
-- `docs/as-is-architecture.md`: Human-readable report
+- Data Model records: services, endpoints, screens, containers (feature set reference)
+- `.eva/discovery.json`: As-is feature set snapshot for parity tracking
+- `docs/as-is-feature-set.md`: Human-readable feature list
+
+**Purpose**: Understand **what** EVA-JP-v1.2 does (features), NOT **how** it's implemented (code).
 
 #### [REFACTOR-00-003] Create planning agent
 **Size**: L | **Status**: planned | **Assignee**: @agent:planning-agent
 
 Scripts:
-- `scripts/migration-planner.py`: AI-generates 500+ story WBS
-- `scripts/technology-recommender.py`: Analyzes tech stack options
-- `agents/planning-agent.yml`: GitHub Copilot agent config
+- `scripts/migration-planner.py`: AI-generates 500+ **Greenfield build stories** (NOT migration)
+- `agents/planning-agent.yml`: GitHub Copilot agent config with Greenfield prompts
+
+AI Prompt Strategy:
+> "Generate WBS for building standalone POC from scratch using React 19 + Agent Framework + Postgres.
+> DO NOT port code from EVA-JP-v1.2. Generate stories for writing NEW code using patterns from:
+> 31-eva-faces/shared, 33-eva-brain-v2, 28-rbac, 51-ACA."
 
 Outputs:
-- `PLAN.md` (expanded): 500+ stories across 4 phases
-- `docs/migration-paths.md`: Option analysis (incremental, greenfield, hybrid)
+- `PLAN.md` (expanded): 500+ Greenfield build stories (Backend Greenfield, Frontend Greenfield, Data Layer Setup, Observability, Security, Testing, Documentation)
+- `docs/greenfield-approach.md`: Rationale for build-from-scratch vs migration
 - `docs/risk-assessment.md`: Risk register with mitigation strategies
 
-#### [REFACTOR-00-004] Create execution agent
-**Size**: L | **Status**: planned | **Assignee**: @agent:execution-agent
-
-Scripts:
-- `agents/execution-agent.yml`: GitHub Copilot agent config
+#### [REFACTOR-00-004] Create execution agent with Greenfield instructions
 - `.github/workflows/sprint-agent.yml`: Story execution workflow
 
 Capabilities:
+- Reads **feature requirements** via Data Model (NOT old code)
+- Generates **new code from scratch** using patterns from 31-eva-faces/shared, 33-eva-brain-v2, 28-rbac, 51-ACA
+- Writes tests (pytest unit, pytest integration, Playwright E2E)
+- Creates PR with EVA-STORY tags + evidence receipt
+
+**NOT Allowed**:
+- Copying code from EVA-JP-v1.2
+- Porting legacy monolithic structure
+- Using Cosmos DB SDKs (Greenfield uses Postgres)
+
+**Allowed**:
+- Copying proven patterns from 31-eva-faces/shared (hooks, utils, types)
+- Referencing EVA-JP-v1.2 for feature parity validation
+- Using Agent Framework examples from 33-eva-brain-v2
 - Reads old code via Data Model (endpoint schemas, dependencies)
 - Generates new code using patterns from 31-eva-faces, 33-eva-brain-v2
 - Writes tests (pytest unit, pytest integration, Playwright E2E)
@@ -101,19 +118,41 @@ Quality Gates:
 File: `.github/workflows/refactor-workflow.yml`
 
 Stages:
-1. Discover: Run Veritas + as-is-scanner
-2. Plan: Generate sprint manifest
-3. Execute: Run sprint-agent.yml for each story
-4. Validate: Feature parity + quality gates
-5. Deploy: Azure Container Apps (blue/green)
+1. Discofeature_parity` (EVA-JP-v1.2 features → 53-refactor features mapping for completeness tracking)
+- L34: `greenfield_decisions` (architecture decision records for Greenfield choices)
 
-Triggers:
-- `workflow_dispatch` (manual)
-- `schedule` (cron: every Monday 9 AM for new sprint)
+Examples:
+```json
+// L33: feature_parity
+{
+  "id": "PARITY-CHAT-001",
+  "reference_feature": "Chat RAG with Azure OpenAI",
+  "reference_path": "EVA-JP-v1.2/app/backend/app.py#L234",
+  "greenfield_story": "REFACTOR-11-045",
+  "status": Reference Analysis (Sprints 1-2, Weeks 1-2)
 
-#### [REFACTOR-00-007] Extend data model with refactor layers
-**Size**: S | **Status**: planned | **Assignee**: @agent:github-copilot
+### Objective
+Scan EVA-JP-v1.2 to understand **feature set** for parity tracking. NOT for code porting - this is reference-only discovery.
 
+### Epic 1: Feature Set Discovery
+
+#### [REFACTOR-01-001] Scan EVA-JP-v1.2 backend for feature inventory
+**Sprint**: REFACTOR-S01 | **Size**: M | **Status**: planned | **Assignee**: @agent:discovery-agent
+
+**Purpose**: Understand what features exist (Chat, Search, Upload, Admin), NOT how they're implemented.
+
+Scan Targets:
+- `app/backend/app.py` → Extract API endpoints (methods, paths, purpose)
+- `app/backend/approaches/` → Identify RAG patterns (for feature parity, NOT code reuse)
+- `functions/` → Document enrichment pipeline features
+
+Data Model Records (for reference):
+- POST `/model/feature_parity/`: Map features (e.g., "Chat RAG" -> will become REFACTOR-11-045)
+- Summary: 50+ API features identified for Greenfield reimplementation
+
+Output:
+- `.eva/feature-inventory.json`: API features list
+- `docs/as-is-feature-set.md`: Human-readable feature catalog
 New Layers:
 - L33: `migrations` (source_files → target_files mapping)
 - L34: `refactor_decisions` (architecture decision records)
@@ -276,294 +315,322 @@ Output:
 
 ---
 
-## Phase 2: Planning (Sprints 3-4, Weeks 3-4)
+## Phase 2: Greenfield Planning (Sprints 3-4, Weeks 3-4)
 
 ### Objective
-Generate comprehensive modernization WBS with 500+ stories, risk assessment, and sprint plan.
+Generate comprehensive Greenfield WBS with 500+ build-from-scratch stories using AI, pattern identification from proven implementations (31-eva-faces, 33-eva-brain-v2, 28-rbac, 51-ACA), and sprint planning.
 
-### Epic 3: Technology Stack Analysis
+### Epic 3: Architecture Decisions (Greenfield)
 
-#### [REFACTOR-02-001] Evaluate frontend migration options
+#### [REFACTOR-02-001] Document frontend Greenfield choices
 **Sprint**: REFACTOR-S03 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
 
-Options:
-1. **Keep React 18** (Low Risk): Minor upgrades only
-2. **Upgrade React 19** (Medium Risk): New hooks, improved Suspense
-3. **Migrate Fluent UI v8 → v9** (Medium Risk): Component API changes
-4. **Add Spark Design System** (Low Risk): Import from 43-eva-spark
+**Decision**: Build React 19 + Fluent UI v9 + Vite 3-face app from scratch
 
-Recommendation:
-- React 18 → 19 (minor upgrade, backward compatible)
-- Fluent UI v8 → v9 (better performance, new components)
-- Integrate Spark design system (reduce custom CSS)
+**Pattern Sources**:
+- **31-eva-faces**: Proven 3-face architecture (admin-face, chat-face, portal-face)
+- **31-eva-faces/shared**: hooks (useAuth, useActingSession), utils (api-client, formatters), types (User, Session), layouts (AppLayout)
+
+**Why Greenfield** (vs porting EVA-JP-v1.2 React 18 monolith):
+- EVA-JP-v1.2 uses mixed Fluent UI v8/v9 (technical debt)
+- Monolithic structure (hard to maintain)
+- Missing test coverage (~40%)
+- **Clean slate**: React 19 + Fluent UI v9 only, modular from day 1, >= 80% test coverage target
 
 Output:
-- `docs/frontend-migration-options.md`
-- Decision: POST `/model/refactor_decisions/REFACTOR-D001`
+- `docs/greenfield-approach.md` (rationale section: Frontend)
+- ADR: POST `/model/greenfield_decisions/REFACTOR-ADR001`
 
-#### [REFACTOR-02-002] Evaluate backend migration options
+#### [REFACTOR-02-002] Document backend Greenfield choices
 **Sprint**: REFACTOR-S03 | **Size**: L | **Status**: planned | **Assignee**: @agent:planning-agent
 
-Options:
-1. **Keep FastAPI monolith** (Low Risk): Minor refactors only
-2. **Decompose to modular routers** (Medium Risk): Split app.py (2473 lines) → 10 route modules
-3. **Migrate to Agent Framework** (High Risk): Replace approaches/ with Agent Framework agents
-4. **Hybrid** (Medium Risk): Decompose routers + Agent Framework for RAG only
+**Decision**: Build FastAPI + Microsoft Agent Framework from scratch with modular routers
 
-Recommendation:
-- **Hybrid approach**: Decompose app.py → 10 routers, use Agent Framework for RAG agents
-- Keep FastAPI (proven, performant, OpenAPI support)
-- Add Pydantic v2 for strict typing
-- Add OpenTelemetry for observability
+**Pattern Sources**:
+- **33-eva-brain-v2**: Agent Framework RAG patterns, multi-agent orchestration, modular router structure
+- **28-rbac**: RBAC middleware for FastAPI (role-based auth)
+- **51-ACA**: OpenTelemetry + Application Insights telemetry patterns
+
+**Why Greenfield** (vs refactoring EVA-JP-v1.2 monolithic app.py):
+- EVA-JP-v1.2 app.py is 2473 lines (monolithic, hard to test)
+- 4 custom RAG approaches (maintenance burden, no observability)
+- Missing async/await (blocking I/O)
+- **Clean slate**: Modular routers from day 1, Agent Framework unified RAG, async throughout, OpenTelemetry instrumentation
 
 Output:
-- `docs/backend-migration-options.md`
-- Decision: POST `/model/refactor_decisions/REFACTOR-D002`
+- `docs/greenfield-approach.md` (rationale section: Backend)
+- ADR: POST `/model/greenfield_decisions/REFACTOR-ADR002`
 
-#### [REFACTOR-02-003] Evaluate data layer migration options
+#### [REFACTOR-02-003] Document data layer Greenfield choices
 **Sprint**: REFACTOR-S03 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
 
-Options:
-1. **Keep Cosmos DB** (Low Risk): No migration, optimize queries
-2. **Migrate to Postgres** (High Risk): Relational model, JSONB for semi-structured
-3. **Hybrid: Postgres + Redis** (Medium Risk): Postgres for relational, Redis for caching
-4. **Dual-write strategy** (Low Risk): Write to both Cosmos + Postgres, gradual cutover
+**Decision**: Use existing `marco-sandbox-cosmos` for POC (zero new cost) OR create small Postgres if relational model critical
 
-Recommendation:
-- **Postgres + Redis**: Cosmos → Postgres (relational data), Redis (session cache, rate limiting)
-- Cost savings: 60% reduction (Cosmos RU/s expensive)
-- SQLAlchemy ORM: Supports both Cosmos and Postgres (gradual migration)
+**Infrastructure**:
+- **Cosmos DB**: `marco-sandbox-cosmos` (existing, EsDAICoE-Sandbox)
+  - Advantages: Already exists, zero new cost, proven at scale
+  - Schema: Design clean Cosmos containers (NOT ported from EVA-JP-v1.2 legacy schema)
+- **Alternative**: Postgres Flexible Server B1ms (~$30/mo) if relational model critical
+- **Cache**: In-memory cache (Python `cachetools`) for POC, upgrade to Redis if needed (~$16/mo)
+
+**Why Greenfield schema**:
+- EVA-JP-v1.2 Cosmos schema has legacy technical debt
+- **Clean slate**: Design optimal schema for Greenfield use cases
 
 Output:
-- `docs/data-migration-options.md`
-- Decision: POST `/model/refactor_decisions/REFACTOR-D003`
+- `docs/greenfield-approach.md` (rationale section: Data Layer)
+- ADR: POST `/model/greenfield_decisions/REFACTOR-ADR003`
 
-#### [REFACTOR-02-004] Evaluate IaC migration options
+#### [REFACTOR-02-004] Document infrastructure Greenfield choices
 **Sprint**: REFACTOR-S03 | **Size**: S | **Status**: planned | **Assignee**: @agent:planning-agent
 
-Options:
-1. **Keep Bicep** (Low Risk): Azure-native, no changes
-2. **Migrate to Terraform** (Medium Risk): Better state management, multi-cloud
-3. **Hybrid: Bicep + Terraform** (High Risk): Use both (not recommended)
+**Decision**: Deploy to existing App Service Plan (marco-sandbox-asp-backend) - **ZERO new infrastructure**
 
-Recommendation:
-- **Terraform**: Better for multi-environment (dev/staging/prod), reusable modules
-- Import modules from 22-rg-sandbox Terraform templates
-- Use Azure Backend for state storage
+**Deployment**:
+- **Backend**: Add new App Service to `marco-sandbox-asp-backend` (Linux, canadacentral) - existing plan, zero new cost
+- **Frontend**: Static Web App Free tier OR add to existing App Service
+- **Container Registry**: `marcosandacr20260203.azurecr.io` (existing, Basic tier)
+- **Secrets**: `marcosandkv20260203` (existing Key Vault)
+- **Telemetry**: `marco-sandbox-appinsights` (existing App Insights)
+
+**Total Cost**: **$0/month** (uses existing resources only)
 
 Output:
-- `docs/iac-migration-options.md`
-- Decision: POST `/model/refactor_decisions/REFACTOR-D004`
+- `docs/greenfield-approach.md` (rationale section: Infrastructure)
+- ADR: POST `/model/greenfield_decisions/REFACTOR-ADR004`
 
-### Epic 4: WBS Generation (AI-Driven)
+### Epic 4: WBS Generation (AI-Driven Greenfield)
 
-#### [REFACTOR-02-005] Generate backend decomposition stories
+#### [REFACTOR-02-005] Generate Backend Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: XL | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Analyze app/backend/app.py (2473 lines). Decompose into modular routers:
-- Chat router: /chat, /chat/stream endpoints
-- Search router: /search, /search/semantic endpoints
-- Upload router: /upload, /upload/status endpoints
-- Admin router: /admin/config, /admin/logs endpoints
-- etc.
+Given EVA-JP-v1.2 feature inventory (Chat RAG, Semantic Search, Document Upload, Admin Config),
+generate Greenfield backend WBS for building from scratch:
+
+DO NOT port/migrate app.py (2473 lines). Write NEW routers using 33-eva-brain-v2 patterns:
+- Chat router: Build using Agent Framework RAG patterns from 33-eva-brain-v2/routes/chat.py
+- Search router: Build using Azure AI Search patterns from 33-eva-brain-v2/routes/search.py
+- Upload router: Build using Blob Storage patterns from 33-eva-brain-v2/routes/upload.py
+- Admin router: Build using 28-rbac middleware patterns for role-based access
 
 For each router, generate:
-- [REFACTOR-03-NNN] Create {router_name} router module
-- Size: M (100-300 lines per router)
-- Acceptance: OpenAPI schema matches old app.py
-- Tests: pytest unit tests, coverage >= 80%
+- [REFACTOR-03-NNN] Build {router_name} router using {pattern_source}
+- Size: M (100-300 lines per router, NEW code)
+- Pattern Location: Exact file path in 33-eva-brain-v2 or 28-rbac
+- Acceptance: OpenAPI schema documented, pytest >= 80% coverage
+- Tests: pytest fixtures from 51-ACA patterns
 ```
 
 Output:
-- 100+ stories in `PLAN.md` (Epic 5: Backend Decomposition)
-- Each story: title, description, acceptance criteria, size
+- 100+ stories in `PLAN.md` (Epic 11: Backend Greenfield)
+- Each story: title, pattern source, acceptance criteria, size
 
-#### [REFACTOR-02-006] Generate frontend modularization stories
+#### [REFACTOR-02-006] Generate Frontend Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: XL | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Analyze app/frontend/src. Split monolithic frontend into 3 faces:
-- Admin Face: /admin/* routes (user mgmt, config, logs)
-- Chat Face: /chat/* routes (RAG chat, history, settings)
-- Portal Face: / (landing page, docs, auth)
+Given EVA-JP-v1.2 feature inventory, generate Greenfield frontend WBS for building 3-face app:
 
-For each face, generate stories for:
-- Page migrations
-- Component refactors
-- API client updates
-- Fluent UI v9 upgrades
+DO NOT port app/frontend/src. Build NEW React 19 3-face app using 31-eva-faces patterns:
+- Admin Face: Build /admin/* routes using 31-eva-faces/admin-face structure (UserManagement, ConfigPanel, LogViewer pages)
+- Chat Face: Build /chat routes using 31-eva-faces/chat-face structure (ChatInterface, HistoryPanel, SettingsDrawer components)
+- Portal Face: Build / landing page using 31-eva-faces/portal-face structure
+
+Copy 31-eva-faces/shared:
+- hooks: useAuth, useActingSession (bootstraps H1 handshake)
+- utils: api-client (axios wrapper with auth), formatters
+- types: User, Session, ApiResponse
+- layouts: AppLayout (nav, header, footer)
+
+For each page/component, generate:
+- [REFACTOR-04-NNN] Build {component_name} using 31-eva-faces/{pattern_path}
+- Size: S (50-150 lines per component, NEW code)
+- Pattern Location: Exact file path in 31-eva-faces
+- Acceptance: Fluent UI v9 only, Vitest tests >= 80% coverage
 ```
 
 Output:
-- 80+ stories in `PLAN.md` (Epic 6: Frontend Modularization)
+- 80+ stories in `PLAN.md` (Epic 12: Frontend Greenfield)
 
-#### [REFACTOR-02-007] Generate data migration stories
+#### [REFACTOR-02-007] Generate Data Layer Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: L | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Plan Cosmos → Postgres + Redis migration:
-1. Schema design (Cosmos JSON → Postgres tables)
-2. Data export scripts (Cosmos query → CSV/JSON)
-3. Data import scripts (CSV/JSON → Postgres)
-4. Dual-write implementation (write to both, read from Postgres)
-5. Data reconciliation (compare Cosmos vs Postgres)
-6. Cutover plan (redirect reads to Postgres)
-7. Cosmos decommission
+Given data requirements (user profiles, chat history, documents, sessions),
+generate Greenfield data layer WBS for building from scratch:
+
+DO NOT migrate Cosmos schema. Design NEW schema optimized for use cases:
+- Option 1: Cosmos DB (existing marco-sandbox-cosmos, zero cost)
+  - Design clean containers: users, sessions, documents, chat_threads
+  - Partition keys optimized for query patterns (NOT legacy EVA-JP-v1.2 keys)
+  - TTL policies for ephemeral data (sessions: 24h, temp files: 1h)
+- Option 2: Postgres Flexible Server B1ms (~$30/mo) if relational model critical
+  - Alembic migrations for schema versioning
+  - SQLAlchemy ORM models
+  - Connection pooling (asyncpg for async)
+
+Stories for:
+1. Schema design (new, NOT ported)
+2. ORM models (SQLAlchemy or Pydantic for Cosmos)
+3. Repository pattern (abstract data access)
+4. Seed data scripts (dev environment bootstrap)
+5. In-memory cache (Python cachetools for POC, Redis optional later)
 ```
 
 Output:
-- 60+ stories in `PLAN.md` (Epic 7: Data Migration)
+- 60+ stories in `PLAN.md` (Epic 13: Data Layer Greenfield)
 
-#### [REFACTOR-02-008] Generate observability & security stories
+#### [REFACTOR-02-008] Generate Observability & Security Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Generate stories for:
-- OpenTelemetry instrumentation (replace print() with structured logging)
-- Application Insights integration (traces, metrics, logs)
-- RBAC implementation (use 28-rbac patterns)
-- Key Vault integration (migrate env vars → secrets)
-- Dependency updates (security patches)
-- OWASP Top 10 audit (SQL injection, XSS, CSRF)
+Generate Greenfield observability & security stories (NO migration, NEW code):
+
+Observability (51-ACA patterns):
+- OpenTelemetry instrumentation: Use 51-ACA telemetry patterns (structured logging, trace/span decorators)
+- Application Insights: Configure using 51-ACA observability setup (connection string from Key Vault)
+- Metrics: Custom metrics for RAG quality (answer relevance, latency percentiles)
+
+Security (28-rbac + 31-eva-faces patterns):
+- RBAC: Use 28-rbac FastAPI middleware (role decorators: @requires_role("admin"))
+- Auth: Copy 31-eva-faces useActingSession hook (H1 handshake with X-Actor-OID header)
+- Secrets: Key Vault client patterns (retrieve connection strings, API keys)
+- OWASP: Input validation (Pydantic models), output escaping (React sanitization), CORS config
+
+Stories for each area with pattern source (exact file path).
 ```
 
 Output:
-- 70+ stories in `PLAN.md` (Epic 8: Observability & Security)
+- 70+ stories in `PLAN.md` (Epic 14: Observability & Security)
 
-#### [REFACTOR-02-009] Generate testing & validation stories
+#### [REFACTOR-02-009] Generate Testing & Validation Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: L | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Generate comprehensive test suite stories:
-- Unit tests: pytest for each router (80% coverage target)
-- Integration tests: API contract tests (old vs new)
-- E2E tests: Playwright for critical user flows
-- Performance tests: Locust load testing (1000 req/s target)
-- Security tests: OWASP ZAP scans
-- Feature parity tests: Compare old vs new responses
+Generate comprehensive Greenfield test suite stories (>= 80% coverage target):
+
+Backend Tests (pytest patterns from 33-eva-brain-v2):
+- Unit tests: Each router (mock dependencies, test business logic)
+- Integration tests: Real API calls (test against dev environment)
+- Fixtures: Reusable test data (users, sessions, documents)
+
+Frontend Tests (Vitest + Playwright patterns from 31-eva-faces):
+- Component tests: Vitest for each component (render, props, events)
+- Integration tests: API mocking (MSW for chat, search, upload)
+- E2E tests: Playwright for critical flows (login → chat → upload)
+
+Feature Parity Tests:
+- Compare Greenfield POC vs EVA-JP-v1.2 feature set (NOT API contract)
+- Validate: All EVA-JP-v1.2 features exist in POC (may differ in implementation)
+- Performance: Greenfield POC meets/exceeds EVA-JP-v1.2 latency (p95 < 2s for chat)
+
+Stories for each test category with pattern source.
 ```
 
 Output:
-- 120+ stories in `PLAN.md` (Epic 9: Testing & Validation)
+- 120+ stories in `PLAN.md` (Epic 15: Testing & Validation)
 
-#### [REFACTOR-02-010] Generate documentation stories
+#### [REFACTOR-02-010] Generate Documentation Greenfield stories with AI
 **Sprint**: REFACTOR-S04 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
 
 AI Prompt:
 ```
-Document the refactored system:
-- Architecture Decision Records (ADRs)
-- API documentation (OpenAPI/Swagger)
-- Deployment guide (Terraform → Azure)
-- Developer guide (setup, testing, contributing)
-- Operations runbook (monitoring, troubleshooting)
-- Security guide (authentication, authorization, secrets)
+Document the Greenfield system:
+- Architecture Decision Records (ADRs): Why Greenfield vs migration
+- Architecture diagrams: 3-face frontend, modular backend with patterns
+- API documentation (OpenAPI/Swagger): Auto-generated from FastAPI
+- Deployment guide: App Service deployment to marco-sandbox-asp-backend
+- Developer guide: Codespaces setup, local Docker, testing
+- Pattern catalog: Which 31-eva-faces/33-eva-brain-v2 patterns used where
+- Operations runbook: Monitoring (App Insights), troubleshooting, scaling
+- Security guide: RBAC (28-rbac), Key Vault, authentication (useActingSession)
 ```
 
 Output:
-- 70+ stories in `PLAN.md` (Epic 10: Documentation)
+- 70+ stories in `PLAN.md` (Epic 16: Documentation)
 
-### Epic 5: Risk Assessment & Sprint Planning
+### Epic 5: Sprint Planning
 
-#### [REFACTOR-02-011] Perform risk assessment
+#### [REFACTOR-02-011] Organize Greenfield stories into 20 sprints
 **Sprint**: REFACTOR-S04 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
 
-Risks:
-1. **Feature Parity Gaps** (High Impact, High Likelihood)
-2. **Data Migration Failures** (High Impact, Medium Likelihood)
-3. **Agent Hallucinations** (Medium Impact, Medium Likelihood)
-4. **Schedule Overrun** (Medium Impact, High Likelihood)
-5. **Cost Overruns** (Low Impact, Medium Likelihood)
-
-For each risk:
-- Likelihood: Low/Medium/High
-- Impact: Low/Medium/High
-- Mitigation strategies
-- Contingency plans
+Sprint Allocation (Greenfield execution):
+- Sprint 1-2: Reference Analysis (Phase 1) - Feature inventory of EVA-JP-v1.2
+- Sprint 3-4: Greenfield Planning (Phase 2) - Architecture decisions, WBS generation (500+ stories)
+- Sprint 5-14: Backend Greenfield (10 sprints, 10 stories/sprint) - Build FastAPI routers from scratch using 33-eva-brain-v2
+- Sprint 15-18: Frontend Greenfield (4 sprints, 20 stories/sprint) - Build React 19 3-face app using 31-eva-faces patterns
+- Sprint 19-20: Data Layer Setup (2 sprints, 30 stories/sprint) - Design Cosmos schema OR create Postgres
+- Sprint 21-22: Testing & Validation (2 sprints, 60 stories/sprint) - pytest + Vitest + Playwright >= 80% coverage
+- Sprint 23: POC Demonstration & Pattern Showcase
 
 Output:
-- `docs/risk-assessment.md`
-- POST `/model/risks/` for each identified risk
-
-#### [REFACTOR-02-012] Generate sprint plan (20 sprints)
-**Sprint**: REFACTOR-S04 | **Size**: M | **Status**: planned | **Assignee**: @agent:planning-agent
-
-Sprint Allocation:
-- Sprint 1-2: Discovery (Phase 1)
-- Sprint 3-4: Planning (Phase 2)
-- Sprint 5-14: Backend Decomposition (10 sprints, 10 stories/sprint)
-- Sprint 15-18: Frontend Modularization (4 sprints, 20 stories/sprint)
-- Sprint 19-20: Data Migration (2 sprints, 30 stories/sprint)
-- Sprint 21-22: Testing & Validation (2 sprints, 60 stories/sprint)
-- Sprint 23: Deployment & Cutover
-
-Output:
-- `docs/sprint-plan.md`: 20-sprint timeline
+- `docs/sprint-plan.md`: 20-sprint timeline with Greenfield milestones
 - Each story assigned to sprint_id
-- Dependencies mapped (story X blocks story Y)
+- Dependencies mapped (Backend routers before Frontend API calls)
 
 ---
 
-## Phase 3: Execution (Sprints 5-22, Weeks 5-22)
+## Phase 3: Greenfield Execution (Sprints 5-22, Weeks 5-22)
 
 ### Objective
-Autonomously execute refactor via GitHub Actions workflows with full traceability.
+Autonomously build Greenfield POC via GitHub Copilot agent with full evidence traceability.
 
-### Epic 11: Backend Decomposition (Sprints 5-14)
+### Epic 11: Backend Greenfield (Sprints 5-14)
 
-#### [REFACTOR-03-001] Create chat router module
+#### [REFACTOR-03-001] Build chat router using 33-eva-brain-v2 patterns
 **Sprint**: REFACTOR-S05 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
-Source: `app/backend/app.py:1-500`  
-Target: `output/routers/chat.py`
+Pattern Source: `33-eva-brain-v2/services/eva-brain-api/app/routes/chat.py`  
+Target: `output/backend/routers/chat.py` (NEW FILE)
 
 Tasks:
-1. Extract chat endpoints from app.py
+1. Copy Agent Framework RAG pattern from 33-eva-brain-v2/routes/chat.py
 2. Create FastAPI router: `router = APIRouter(prefix="/chat", tags=["chat"])`
-3. Migrate endpoints: `/chat`, `/chat/stream`, `/chat/history`
-4. Port Pydantic models: `ChatRequest`, `ChatResponse`
-5. Write tests: `tests/routers/test_chat.py` (coverage >= 80%)
+3. Build endpoints: `/chat` (POST), `/chat/stream` (WebSocket), `/chat/history` (GET)
+4. Use Agent Framework client patterns (NOT port EVA-JP-v1.2 custom RAG)
+5. Write tests: `tests/routers/test_chat.py` using 51-ACA pytest patterns (coverage >= 80%)
 
 Acceptance:
-- [ ] OpenAPI schema matches old app.py
-- [ ] All tests pass (pytest)
-- [ ] MTI >= 70 (Veritas audit)
-- [ ] Feature parity: old `/chat` == new `/chat` (response comparison)
+- [ ] OpenAPI schema documented (FastAPI auto-generation)
+- [ ] All tests pass (pytest with fixtures from 51-ACA)
+- [ ] MTI >= 70 (Veritas audit with EVA-STORY tags)
+- [ ] Feature parity: Chat functionality matches EVA-JP-v1.2 (NOT API contract)
 
-#### [REFACTOR-03-002] Create search router module
+#### [REFACTOR-03-002] Build search router using 33-eva-brain-v2 patterns
 **Sprint**: REFACTOR-S05 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
-Source: `app/backend/app.py:500-800`  
-Target: `output/routers/search.py`
+Pattern Source: `33-eva-brain-v2/services/eva-brain-api/app/routes/search.py`  
+Target: `output/backend/routers/search.py` (NEW FILE)
 
 Tasks:
-1. Extract search endpoints from app.py
+1. Copy Azure AI Search patterns from 33-eva-brain-v2/routes/search.py
 2. Create FastAPI router: `router = APIRouter(prefix="/search", tags=["search"])`
-3. Migrate endpoints: `/search`, `/search/semantic`, `/search/filters`
-4. Port Azure AI Search client logic
-5. Write tests: `tests/routers/test_search.py`
+3. Build endpoints: `/search` (POST), `/search/semantic` (POST), `/search/filters` (GET)
+4. Use Azure AI Search SDK (NOT port EVA-JP-v1.2 custom search)
+5. Write tests: `tests/routers/test_search.py` with mock AI Search client
 
 Acceptance:
-- [ ] Search results match old system (same relevance)
-- [ ] Tests pass (pytest + integration)
+- [ ] Search results relevant (semantic search working)
+- [ ] Tests pass (pytest + integration with dev AI Search index)
 - [ ] MTI >= 70
 
-#### [REFACTOR-03-003] Create upload router module
+#### [REFACTOR-03-003] Build upload router using 33-eva-brain-v2 patterns
 **Sprint**: REFACTOR-S06 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
-Source: `app/backend/app.py:800-1100`  
-Target: `output/routers/upload.py`
+Pattern Source: `33-eva-brain-v2/services/eva-brain-api/app/routes/upload.py`  
+Target: `output/backend/routers/upload.py` (NEW FILE)
 
 Tasks:
-1. Extract upload endpoints from app.py
-2. Create router: `/upload`, `/upload/status`, `/upload/list`
-3. Port Blob Storage client logic
+1. Copy Azure Blob Storage patterns from 33-eva-brain-v2/routes/upload.py
+2. Create router: `/upload` (POST multipart), `/upload/status` (GET), `/upload/list` (GET)
+3. Use Blob Storage SDK (azure-storage-blob) with marcosand20260203 storage account
+4. Create container: "refactor-uploads" in existing storage account
 4. Add file validation (size, type, virus scan)
 5. Write tests: `tests/routers/test_upload.py`
 
@@ -574,130 +641,158 @@ Acceptance:
 
 ...
 
-**Note**: Stories [REFACTOR-03-004] through [REFACTOR-03-100] follow same pattern.  
-Total: 100 backend decomposition stories (10 stories/sprint × 10 sprints).
+**Note**: Stories [REFACTOR-03-004] through [REFACTOR-03-100] follow same pattern using 33-eva-brain-v2 patterns.  
+Total: 100 backend Greenfield stories (10 stories/sprint × 10 sprints).
 
-### Epic 12: Frontend Modularization (Sprints 15-18)
+### Epic 12: Frontend Greenfield (Sprints 15-18)
 
-#### [REFACTOR-04-001] Create admin-face project scaffold
+#### [REFACTOR-04-001] Create admin-face project scaffold from 31-eva-faces
 **Sprint**: REFACTOR-S15 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
+Pattern Source: `31-eva-faces/admin-face/`  
+Target: `output/admin-face/` (NEW PROJECT)
+
 Tasks:
-1. Clone 31-eva-faces/admin-face structure
-2. Update package.json: dependencies, scripts
-3. Configure Vite: vite.config.ts
-4. Setup Fluent UI v9: import providers
-5. Create shared folder: hooks, utils, types
+1. Copy 31-eva-faces/admin-face project structure (NOT port EVA-JP-v1.2 admin UI)
+2. Update package.json: dependencies (React 19, Fluent UI v9, Vite), scripts
+3. Configure Vite: vite.config.ts with dev server, build optimizations
+4. Setup Fluent UI v9: FluentProvider, theme configuration
+5. Copy 31-eva-faces/shared: hooks (useAuth, useActingSession), utils (api-client), types, layouts
 
 Acceptance:
-- [ ] `npm run dev` starts dev server
-- [ ] `npm run build` produces dist/
-- [ ] Fluent UI v9 components render
+- [ ] `npm run dev` starts dev server on port 3000
+- [ ] `npm run build` produces optimized dist/ bundle
+- [ ] Fluent UI v9 components render (test with sample Button)
+- [ ] EVA-STORY tags configured (admin-face project initialization)
 
-#### [REFACTOR-04-002] Migrate admin user management page
+#### [REFACTOR-04-002] Build admin user management page using 31-eva-faces patterns
 **Sprint**: REFACTOR-S15 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
-Source: `app/frontend/src/pages/Admin/Users.tsx`  
-Target: `output/admin-face/src/pages/Users.tsx`
+Pattern Source: `31-eva-faces/admin-face/src/pages/UserManagement.tsx`  
+Target: `output/admin-face/src/pages/Users.tsx` (NEW FILE)
 
 Tasks:
-1. Port Users.tsx component (React 18 → 19)
-2. Upgrade Fluent UI v8 → v9:
-   - `<PrimaryButton>` → `<Button appearance="primary">`
-   - `<DetailsList>` → `<DataGrid>`
-3. Update API calls: axios → fetch + React Query
-4. Write tests: `tests/pages/Users.test.tsx` (Vitest + Testing Library)
+1. Copy UserManagement pattern from 31-eva-faces (NOT port EVA-JP-v1.2 Users.tsx)
+2. Build with React 19 + Fluent UI v9:
+   - `<Button appearance="primary">` (NOT v8 PrimaryButton)
+   - `<DataGrid>` for user list (NOT v8 DetailsList)
+   - `<Dialog>` for CRUD forms
+3. API calls: Use copied api-client from 31-eva-faces/shared/utils
+4. Auth: Use copied useActingSession hook (H1 handshake)
+5. Write tests: `tests/pages/Users.test.tsx` using Vitest + Testing Library patterns from 31-eva-faces
 
 Acceptance:
-- [ ] User list renders correctly
-- [ ] CRUD operations work (create, read, update, delete)
-- [ ] Tests pass (Vitest)
+- [ ] User list renders with DataGrid
+- [ ] CRUD operations work (create, read, update, delete via API)
+- [ ] Tests pass (Vitest >= 80% coverage)
+- [ ] MTI >= 70 (EVA-STORY: REFACTOR-04-002 tags)
 
 ...
 
-**Note**: Stories [REFACTOR-04-003] through [REFACTOR-04-080] follow same pattern.  
-Total: 80 frontend modularization stories (20 stories/sprint × 4 sprints).
+**Note**: Stories [REFACTOR-04-003] through [REFACTOR-04-080] follow same pattern using 31-eva-faces patterns.  
+Total: 80 frontend Greenfield stories (20 stories/sprint × 4 sprints).
 
-### Epic 13: Data Migration (Sprints 19-20)
+### Epic 13: Data Layer Setup (Sprints 19-20)
 
-#### [REFACTOR-05-001] Design Postgres schema
+#### [REFACTOR-05-001] Design Cosmos containers schema (Greenfield)
 **Sprint**: REFACTOR-S19 | **Size**: M | **Status**: planned | **Assignee**: @agent:execution-agent
 
+Database: `marco-sandbox-cosmos` (existing, zero new cost)  
+Target: NEW container schemas (NOT ported from EVA-JP-v1.2 legacy schema)
+
 Tasks:
-1. Analyze Cosmos containers: users, documents, chats, uploads
-2. Design Postgres tables with proper relations
-3. Use JSONB for semi-structured data (chat messages)
-4. Add indexes for performance (user_id, document_id)
-5. Write migration scripts: Alembic
+1. Design clean Cosmos containers optimized for Greenfield use cases:
+   - `users`: partition_key=/user_id, fields: id, email, roles, preferences, created_at
+   - `sessions`: partition_key=/session_id, TTL=86400 (24h auto-expire), fields: id, user_id, token, expires_at
+   - `documents`: partition_key=/user_id, fields: id, filename, storage_path, uploaded_by, metadata, created_at
+   - `chat_threads`: partition_key=/user_id, fields: id, thread_id, messages[], created_at, updated_at
+2. Design partition keys optimized for query patterns (NOT legacy EVA-JP-v1.2 keys)
+3. Add TTL policies for ephemeral data (sessions: 24h, temp files: 1h)
+4. Write Cosmos SDK client: `db/cosmos_client.py` with async operations
 
 Acceptance:
-- [ ] Schema review passed (DBA approval)
-- [ ] Indexes optimized (explain analyze)
-- [ ] Migration scripts tested (dev environment)
+- [ ] Container schemas documented in `docs/data-model.md`
+- [ ] Partition key strategy reviewed (query efficiency)
+- [ ] TTL policies tested (dev environment)
+- [ ] EVA-STORY tags: REFACTOR-05-001
 
-#### [REFACTOR-05-002] Implement dual-write strategy
+#### [REFACTOR-05-002] Implement Cosmos repository pattern
 **Sprint**: REFACTOR-S19 | **Size**: L | **Status**: planned | **Assignee**: @agent:execution-agent
 
+Pattern: Abstract data access with repository classes (NOT direct Cosmos SDK calls)
+
 Tasks:
-1. Create database abstraction layer: `db/repository.py`
-2. Implement dual-write: every write → both Cosmos + Postgres
-3. Add feature flag: `DUAL_WRITE_ENABLED=true`
-4. Monitor writes: latency, errors, consistency
-5. Write tests: verify both DBs updated
+1. Create repository base class: `db/repository_base.py` (generic CRUD operations)
+2. Implement specific repositories:
+   - `UserRepository`: create_user, get_user, update_user, delete_user, list_users
+   - `SessionRepository`: create_session, get_session, validate_session (with TTL check)
+   - `DocumentRepository`: create_document, get_document, list_user_documents, delete_document
+   - `ChatRepository`: create_thread, get_thread, add_message, list_user_threads
+3. Use async/await throughout (NOT blocking I/O like EVA-JP-v1.2)
+4. Add in-memory cache: Python `cachetools` for frequently accessed data (user profiles, session validation)
+5. Write tests: `tests/db/test_repositories.py` with mock Cosmos client
 
 Acceptance:
-- [ ] All writes go to both Cosmos and Postgres
-- [ ] Latency acceptable (< 200ms P95)
-- [ ] Zero data loss (audit log)
+- [ ] All repositories implement CRUD operations
+- [ ] Async operations tested (asyncio.run in pytest)
+- [ ] Cache hit rate >= 80% for user profile queries
+- [ ] MTI >= 70
 
 ...
 
 **Note**: Stories [REFACTOR-05-003] through [REFACTOR-05-060] follow same pattern.  
-Total: 60 data migration stories (30 stories/sprint × 2 sprints).
+Total: 60 data layer setup stories (30 stories/sprint × 2 sprints).
 
 ---
 
-## Phase 4: Validation (Sprints 23, Week 23)
+## Phase 4: Validation & POC Demonstration (Sprint 23, Week 23)
 
 ### Objective
-Verify feature parity, performance, security, and quality gates before production cutover.
+Verify feature parity with EVA-JP-v1.2, performance benchmarks, security gates, and quality thresholds before presenting POC.
 
 ### Epic 14: Feature Parity Validation
 
-#### [REFACTOR-06-001] Compare old vs new API contracts
+#### [REFACTOR-06-001] Validate feature parity with EVA-JP-v1.2
 **Sprint**: REFACTOR-S23 | **Size**: M | **Status**: planned | **Assignee**: @agent:validation-agent
 
-Script: `scripts/feature-parity-test.py`
+Script: `scripts/feature-parity-check.py`
 
 Tasks:
-1. Export OpenAPI schemas: old app.py vs new routers
-2. Compare endpoints: paths, methods, request/response schemas
-3. Identify breaking changes (flag for manual review)
-4. Generate diff report
+1. Compare EVA-JP-v1.2 feature inventory vs Greenfield POC implemented features
+2. Validate: All EVA-JP-v1.2 features exist in POC (implementation may differ)
+3. Test user flows: Login → Chat → Search → Upload → Admin (E2E)
+4. Performance comparison: Chat latency (p50, p95, p99) POC vs EVA-JP-v1.2
+5. Generate parity report: `docs/feature-parity-report.md`
 
 Acceptance:
-- [ ] 100% endpoint coverage (all old endpoints migrated)
-- [ ] Zero breaking changes (or approved by PM)
-- [ ] Report: `docs/api-diff-report.md`
+- [ ] 100% feature coverage (all EVA-JP-v1.2 features exist in POC)
+- [ ] Performance equal or better (p95 chat latency <= EVA-JP-v1.2 baseline)
+- [ ] Report documents: Feature mapping (EVA-JP-v1.2 → POC), missing features (if any), performance benchmarks
 
-#### [REFACTOR-06-002] Run E2E test suite on both systems
+#### [REFACTOR-06-002] Run E2E test suite on Greenfield POC
 **Sprint**: REFACTOR-S23 | **Size**: L | **Status**: planned | **Assignee**: @agent:validation-agent
 
-Tests (Playwright):
-1. User authentication flow (login, logout)
-2. Chat flow (send message, stream response, view history)
-3. Search flow (query, filter, pagination)
-4. Upload flow (select file, upload, view status)
-5. Admin flow (manage users, view logs)
+Framework: Playwright (patterns from 31-eva-faces)
+
+Tasks:
+1. Copy Playwright test patterns from 31-eva-faces/tests/e2e/
+2. Build E2E tests for Greenfield POC critical flows:
+   - User authentication: Login (H1 handshake via useActingSession) → Logout
+   - Chat: Send message → Stream response → View history
+   - Search: Query → Filter results → Pagination
+   - Upload: Select file → Upload to Blob Storage → View status
+   - Admin: Manage users (RBAC-protected) → View logs
+3. Run tests against Greenfield POC deployment (staging environment)
+4. Performance assertions: Response times (baseline from EVA-JP-v1.2)
 
 Acceptance:
-- [ ] All E2E tests pass on old system (baseline)
-- [ ] All E2E tests pass on new system (parity)
-- [ ] Response times comparable (< 10% difference)
+- [ ] All E2E tests pass on Greenfield POC
+- [ ] Response times meet or exceed EVA-JP-v1.2 baseline (p95 chat latency <= 2s)
+- [ ] Zero critical bugs (P0/P1)
 
 ### Epic 15: Quality Gates
 
-#### [REFACTOR-06-003] Run Veritas audit on refactored system
+#### [REFACTOR-06-003] Run Veritas audit on Greenfield POC
 **Sprint**: REFACTOR-S23 | **Size**: M | **Status**: planned | **Assignee**: @agent:github-copilot
 
 Command:
@@ -705,104 +800,124 @@ Command:
 node src/cli.js audit --repo C:\AICOE\eva-foundry\53-refactor\output
 ```
 
-Metrics:
-- MTI Score: >= 80 (target, vs baseline 50)
-- Test Coverage: >= 80% (measured via pytest cov)
-- Gaps: Zero missing implementation
-- Quality Gates: All pass (Veritas + custom)
+Target Metrics (High-Quality POC like 51-ACA):
+- MTI Score: >= 80 (vs EVA-JP-v1.2 baseline ~50)
+- Test Coverage: >= 80% (pytest for backend, Vitest for frontend)
+- Gaps: Zero missing implementation for planned features
+- Quality Gates: All pass (Veritas trust gates + custom gates)
 
 Acceptance:
-- [ ] MTI >= 80 (PASS)
-- [ ] Coverage >= 80% (PASS)
-- [ ] Zero high-severity gaps
+- [ ] MTI >= 80 (PASS - high-quality POC like 51-ACA)
+- [ ] Test coverage >= 80% (PASS - backend pytest + frontend Vitest)
+- [ ] Zero high-severity gaps (WARN on medium/low acceptable for POC)
 
-#### [REFACTOR-06-004] Run security scans
+#### [REFACTOR-06-004] Run security scans on Greenfield POC
 **Sprint**: REFACTOR-S23 | **Size**: M | **Status**: planned | **Assignee**: @agent:validation-agent
 
 Scans:
-1. **OWASP ZAP**: Web application security testing
-2. **Bandit**: Python security linter
-3. **npm audit**: Node.js dependency vulnerabilities
-4. **Trivy**: Container image scanning
-5. **Secrets**: Git history scan for leaked secrets
+1. **OWASP ZAP**: Web application security testing (XSS, CSRF, SQL injection)
+2. **Bandit**: Python security linter (backend routers)
+3. **npm audit**: Node.js dependency vulnerabilities (frontend packages)
+4. **Trivy**: Container image scanning (Docker images for App Service deployment)
+5. **Secrets**: Git history scan for leaked secrets (no hardcoded keys in code)
 
 Acceptance:
-- [ ] Zero high-severity vulnerabilities
-- [ ] Zero secrets in code or Git history
-- [ ] All dependencies patched
+- [ ] Zero high-severity vulnerabilities (CRITICAL for POC)
+- [ ] Zero secrets in code or Git history (all secrets in Key Vault)
+- [ ] All dependencies patched to latest stable versions
 
 ### Epic 16: Performance & Cost Validation
 
-#### [REFACTOR-06-005] Run performance benchmarks
+#### [REFACTOR-06-005] Run performance benchmarks on Greenfield POC
 **Sprint**: REFACTOR-S23 | **Size**: M | **Status**: planned | **Assignee**: @agent:validation-agent
 
-Benchmarks (Locust):
-1. Load test: 1000 req/s sustained for 10 minutes
-2. Latency: P50, P95, P99 for all endpoints
-3. Throughput: Requests per second (old vs new)
-4. Resource utilization: CPU, memory, disk I/O
+Benchmarks (Locust or k6):
+1. Load test: Chat endpoint 100 concurrent users, 10 minutes sustained
+2. Latency: P50, P95, P99 for all endpoints (chat, search, upload)
+3. Throughput: Requests per second (Greenfield POC vs EVA-JP-v1.2 baseline)
+4. Resource utilization: CPU, memory (App Insights monitoring)
+
+Target Performance:
+- Chat latency p95 <= 2s (EVA-JP-v1.2 baseline: ~2.5s)
+- Search latency p95 <= 1s (EVA-JP-v1.2 baseline: ~1.5s)
+- Upload throughput >= 10 files/minute
 
 Acceptance:
-- [ ] Latency P95 <= 100ms (old: 150ms, improved)
-- [ ] Throughput >= 1000 req/s (old: 800 req/s, improved)
-- [ ] Resource usage <= 80% (CPU, memory)
+- [ ] Latency P95 meets or beats EVA-JP-v1.2 baseline
+- [ ] Throughput meets or beats EVA-JP-v1.2 baseline
+- [ ] Resource usage <= 80% (CPU, memory on App Service Plan)
 
-#### [REFACTOR-06-006] Calculate cost comparison
+#### [REFACTOR-06-006] Calculate infrastructure cost
 **Sprint**: REFACTOR-S23 | **Size**: S | **Status**: planned | **Assignee**: @agent:github-copilot
 
-Cost Items:
-1. **Cosmos DB RU/s**: $X/month → $0 (decommissioned)
-2. **Postgres Flexible Server**: $0 → $Y/month
-3. **Redis Cache**: $0 → $Z/month
-4. **App Service**: $A/month → $A/month (same)
-5. **Functions**: $B/month → $B/month (same)
+Infrastructure Cost (POC Deployment):
+
+**Uses Existing Resources** (Zero new cost):
+1. **Cosmos DB**: marco-sandbox-cosmos (existing, $0 new cost)
+2. **App Service Plan**: marco-sandbox-asp-backend (existing Linux plan, $0 new cost for adding new App Service)
+3. **Storage**: marcosand20260203 (existing, container "refactor-uploads" $0 new cost)
+4. **Key Vault**: marcosandkv20260203 (existing, $0 new cost)
+5. **App Insights**: marco-sandbox-appinsights (existing, $0 new cost)
+6. **Container Registry**: marcosandacr20260203.azurecr.io (existing, $0 new cost)
+
+**Optional New Resources** (if needed beyond POC):
+- Postgres Flexible Server B1ms: ~$30/month (if relational model critical)
+- Redis Basic: ~$16/month (if in-memory cache insufficient)
+
+**Total POC Cost**: **$0/month** (uses existing sandbox resources only)
 
 Acceptance:
-- [ ] Total cost reduced by >= 40% (Postgres + Redis cheaper than Cosmos)
-- [ ] ROI justified (6-month payback period)
+Acceptance:
+- [ ] Cost breakdown documented in `docs/cost-analysis.md`
+- [ ] Zero new infrastructure required for POC demonstration
+- [ ] Optional upgrades documented for production consideration
 
 ---
 
-## Backlog (Future Enhancements)
+## Backlog (Future Enhancements Beyond POC)
 
-### Epic 17: Advanced Features (Post-Refactor)
+### Epic 17: Production-Ready Features (Post-POC)
 
-- [ ] [REFACTOR-07-001] Add multi-tenant support (isolated data per tenant)
-- [ ] [REFACTOR-07-002] Implement rate limiting (Redis-based)
-- [ ] [REFACTOR-07-003] Add caching layer (Redis + CDN)
-- [ ] [REFACTOR-07-004] Migrate to microservices (Kubernetes)
-- [ ] [REFACTOR-07-005] Add GraphQL API (alternative to REST)
-- [ ] [REFACTOR-07-006] Implement real-time features (WebSockets)
-- [ ] [REFACTOR-07-007] Add mobile app (React Native)
+**Context**: These stories are BEYOND the Greenfield POC scope. The POC demonstrates high-quality patterns and achieves feature parity with EVA-JP-v1.2. These are optional production enhancements.
+
+- [ ] [REFACTOR-07-001] Add multi-tenant support (isolated data per tenant via Cosmos partition keys)
+- [ ] [REFACTOR-07-002] Implement advanced rate limiting (Redis-based per-user quotas)
+- [ ] [REFACTOR-07-003] Add caching layer (Redis distributed cache + CDN for static assets)
+- [ ] [REFACTOR-07-004] Horizontal scaling (multiple App Service instances with load balancer)
+- [ ] [REFACTOR-07-005] Add GraphQL API (alternative to REST for flexible queries)
+- [ ] [REFACTOR-07-006] Implement advanced real-time features (WebSocket server for collaboration)
+- [ ] [REFACTOR-07-007] Add mobile app (React Native reusing backend API)
+- [ ] [REFACTOR-07-008] Production-grade DR (multi-region deployment, automatic failover)
+- [ ] [REFACTOR-07-009] Advanced observability (distributed tracing with Jaeger, custom dashboards)
 
 ---
 
 ## Appendix A: Story Size Guidelines
 
 **XS** (1-2 hours):
-- Simple config changes
-- Documentation updates
-- Minor bug fixes
+- Simple config changes (update .env, add feature flag)
+- Documentation updates (README, inline comments)
+- Minor bug fixes (typos, small logic errors)
 
 **S** (4-6 hours):
-- Small feature additions
-- Refactor single function
-- Add unit tests
+- Small feature additions (add query parameter, new field)
+- Copy pattern from source project (31-eva-faces hook, 33-eva-brain-v2 router)
+- Add unit tests (single function or component)
 
 **M** (1-2 days):
-- Refactor single module
-- Migrate single router
-- Add integration tests
+- Build single module from scratch using patterns (router, page, repository)
+- Write integration tests (API endpoint with mock dependencies)
+- Implement observability patterns (51-ACA telemetry for one service)
 
 **L** (3-5 days):
-- Refactor large component
-- Complex data migration
-- Feature with multiple endpoints
+- Build complex component with multiple dependencies (chat interface with streaming)
+- Implement data layer patterns (repository with cache, async operations)
+- Feature with multiple endpoints and tests (full CRUD with validation)
 
 **XL** (1-2 weeks):
-- Complete subsystem refactor
-- Multi-step migration
-- Cross-cutting concerns
+- Complete subsystem Greenfield build (entire admin-face with 10 pages)
+- Multi-epic orchestration (backend + frontend + data layer for one feature)
+- Cross-cutting concerns (authentication, RBAC, observability across all services)
 
 ---
 
